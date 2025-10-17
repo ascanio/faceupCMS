@@ -1,0 +1,12 @@
+{
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "storage": [
+    {
+      "bucket": "faceup-d022b.appspot.com",
+      "rules": "storage.rules"
+    }
+  ]
+}
+

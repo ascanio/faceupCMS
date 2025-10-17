@@ -1,0 +1,19 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Category cover images - allow all reads and writes for development
+    match /categories/{allPaths=**} {
+      allow read: if true;
+      allow write: if true;
+    }
+    
+    // Filter thumbnails - allow all reads and writes for development
+    match /filters/{allPaths=**} {
+      allow read: if true;
+      allow write: if true;
+    }
+  }
+}
+
+
+
