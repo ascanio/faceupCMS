@@ -12,6 +12,7 @@ interface FormState {
   description: string;
   order: number;
   visible: boolean;
+  hasSubcategories: boolean;
   tags: string[];
   isSubcategory: boolean;
   parentCategoryId?: string;
@@ -25,6 +26,7 @@ function emptyForm(): FormState {
     description: '',
     order: 0,
     visible: true,
+    hasSubcategories: false,
     tags: [],
     isSubcategory: false,
     parentCategoryId: undefined,
@@ -110,6 +112,18 @@ export default function CategoriesPage() {
     }
   }, [form.parentCategoryId, form.isSubcategory, categories, coverImageFile, editingId]);
 
+  // Auto-update hasSubcategories for all categories based on actual subcategories
+  useEffect(() => {
+    categories.forEach(async (category) => {
+      const actualHasSubcategories = subcategories.some(sub => sub.parentCategoryId === category.id);
+      if (category.hasSubcategories !== actualHasSubcategories) {
+        await updateDoc(doc(db, 'categories', category.id!), {
+          hasSubcategories: actualHasSubcategories,
+        });
+      }
+    });
+  }, [subcategories.length, categories.length]);
+
   async function uploadCoverImageIfNeeded(existingUrl?: string): Promise<string> {
     if (!coverImageFile) return existingUrl || '';
     const resized = await resizeImage(coverImageFile, 192, 240);
@@ -146,10 +160,10 @@ export default function CategoriesPage() {
         updatedAt: serverTimestamp(),
       } as any;
       
-      // Add parentCategoryId only for subcategories
+      // Add hasSubcategories only for categories, parentCategoryId only for subcategories
       const payload = form.isSubcategory 
         ? { ...basePayload, parentCategoryId: form.parentCategoryId }
-        : basePayload;
+        : { ...basePayload, hasSubcategories: form.hasSubcategories };
 
       if (editingId) {
         await updateDoc(doc(db, collectionName, editingId), payload);
@@ -264,6 +278,18 @@ export default function CategoriesPage() {
               />
               <label htmlFor="visible">Visible</label>
             </div>
+            {!form.isSubcategory && (
+              <div className="flex items-center gap-2">
+                <input
+                  id="hasSubcategories"
+                  type="checkbox"
+                  checked={form.hasSubcategories}
+                  onChange={(e) => setForm((f) => ({ ...f, hasSubcategories: e.target.checked }))}
+                />
+                <label htmlFor="hasSubcategories">Has Subcategories</label>
+                <span className="text-xs text-gray-500">(auto-updated based on actual subcategories)</span>
+              </div>
+            )}
             <div className="flex items-center gap-2">
               <input
                 id="isSubcategory"
@@ -348,6 +374,7 @@ export default function CategoriesPage() {
                   <th className="py-2 pr-2">Slug</th>
                   <th className="py-2 pr-2">Order</th>
                   <th className="py-2 pr-2">Visible</th>
+                  <th className="py-2 pr-2">Has Subs</th>
                   <th className="py-2">Actions</th>
                 </tr>
               </thead>
@@ -370,6 +397,13 @@ export default function CategoriesPage() {
                     <td className="py-2 pr-2">{c.slug}</td>
                     <td className="py-2 pr-2">{c.order}</td>
                     <td className="py-2 pr-2">{c.visible ? 'Yes' : 'No'}</td>
+                    <td className="py-2 pr-2">
+                      {c.hasSubcategories ? (
+                        <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Yes</span>
+                      ) : (
+                        <span className="text-xs text-gray-400">No</span>
+                      )}
+                    </td>
                     <td className="py-2 flex gap-2">
                       <button className="px-3 py-1 rounded border" onClick={() => startEditCategory(c)}>Edit</button>
                       <button className="px-3 py-1 rounded border text-red-600" onClick={() => removeCategory(c.id!)}>Delete</button>
@@ -395,6 +429,9 @@ export default function CategoriesPage() {
                     <td className="py-2 pr-2">{s.slug}</td>
                     <td className="py-2 pr-2">{s.order}</td>
                     <td className="py-2 pr-2">{s.visible ? 'Yes' : 'No'}</td>
+                    <td className="py-2 pr-2">
+                      <span className="text-xs text-gray-400">—</span>
+                    </td>
                     <td className="py-2 flex gap-2">
                       <button className="px-3 py-1 rounded border" onClick={() => startEditSubcategory(s)}>Edit</button>
                       <button className="px-3 py-1 rounded border text-red-600" onClick={() => removeSubcategory(s.id!)}>Delete</button>

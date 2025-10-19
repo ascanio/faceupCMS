@@ -22,6 +22,7 @@ export interface Category {
 	description?: string;
 	order: number;
 	visible: boolean;
+	hasSubcategories?: boolean; // indicates if this category has subcategories
 	tags?: string[];
 	updatedAt?: Timestamp; // set by server
 }

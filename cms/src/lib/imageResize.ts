@@ -43,6 +43,9 @@ export async function resizeImage(
       canvas.width = targetWidth;
       canvas.height = targetHeight;
 
+      // Clear canvas to ensure transparency is preserved
+      ctx.clearRect(0, 0, targetWidth, targetHeight);
+
       // Draw cropped and scaled image
       ctx.drawImage(
         img,
@@ -56,6 +59,10 @@ export async function resizeImage(
         targetHeight
       );
 
+      // Preserve original format and use lossless compression for PNG
+      const outputType = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+      const quality = file.type === 'image/png' ? 1.0 : 0.95;
+
       canvas.toBlob(
         (blob) => {
           if (!blob) {
@@ -63,13 +70,13 @@ export async function resizeImage(
             return;
           }
           const resizedFile = new File([blob], file.name, {
-            type: 'image/webp',
+            type: outputType,
             lastModified: Date.now(),
           });
           resolve(resizedFile);
         },
-        'image/webp',
-        0.9
+        outputType,
+        quality
       );
     };
 
@@ -77,6 +84,8 @@ export async function resizeImage(
     img.src = URL.createObjectURL(file);
   });
 }
+
+
 
 
 
