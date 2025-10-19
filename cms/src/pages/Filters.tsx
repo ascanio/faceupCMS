@@ -151,13 +151,13 @@ export default function FiltersPage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+    <div className="w-full">
+      <div className="mb-6">
         <h2 className="text-xl font-semibold">Filters</h2>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <section className="bg-white border rounded p-4">
+      <div className="flex gap-6">
+        <section className="bg-white border rounded p-4 w-96 flex-shrink-0">
           <h3 className="font-medium mb-3">{title}</h3>
           <form onSubmit={handleSubmit} className="space-y-3">
             <div>
@@ -294,7 +294,7 @@ export default function FiltersPage() {
           </form>
         </section>
 
-        <section className="bg-white border rounded p-4">
+        <section className="bg-white border rounded p-4 flex-1 min-w-0">
           <h3 className="font-medium mb-3">Existing</h3>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">

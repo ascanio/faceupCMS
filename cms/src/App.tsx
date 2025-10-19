@@ -6,29 +6,31 @@ import FiltersPage from './pages/Filters'
 function App() {
   return (
     <BrowserRouter>
-      <div className="min-h-screen grid grid-cols-[220px_1fr]">
-        <aside className="border-r bg-white p-4">
-          <h1 className="text-lg font-semibold mb-4">FaceUp CMS</h1>
-          <nav className="flex flex-col gap-2">
-            <NavLink
-              to="/filters"
-              className={({ isActive }) =>
-                `px-3 py-2 rounded hover:bg-gray-100 ${isActive ? 'bg-gray-100 font-medium' : ''}`
-              }
-            >
-              Filters
-            </NavLink>
-            <NavLink
-              to="/categories"
-              className={({ isActive }) =>
-                `px-3 py-2 rounded hover:bg-gray-100 ${isActive ? 'bg-gray-100 font-medium' : ''}`
-              }
-            >
-              Categories
-            </NavLink>
-          </nav>
-        </aside>
-        <main className="p-6">
+      <div className="min-h-screen flex flex-col">
+        <header className="border-b bg-white shadow-sm">
+          <div className="flex items-center justify-between px-6 py-4">
+            <h1 className="text-xl font-semibold">FaceUp CMS</h1>
+            <nav className="flex gap-1">
+              <NavLink
+                to="/filters"
+                className={({ isActive }) =>
+                  `px-4 py-2 rounded hover:bg-gray-100 transition-colors ${isActive ? 'bg-gray-100 font-medium' : ''}`
+                }
+              >
+                Filters
+              </NavLink>
+              <NavLink
+                to="/categories"
+                className={({ isActive }) =>
+                  `px-4 py-2 rounded hover:bg-gray-100 transition-colors ${isActive ? 'bg-gray-100 font-medium' : ''}`
+                }
+              >
+                Categories
+              </NavLink>
+            </nav>
+          </div>
+        </header>
+        <main className="flex-1 p-6 bg-gray-50">
           <Routes>
             <Route path="/" element={<Navigate to="/filters" replace />} />
             <Route path="/filters" element={<FiltersPage />} />
