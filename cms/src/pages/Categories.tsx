@@ -1,9 +1,37 @@
 import { useEffect, useMemo, useState } from 'react';
-import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, serverTimestamp } from 'firebase/firestore';
+import {
+  collection,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  onSnapshot,
+  query,
+  orderBy,
+  serverTimestamp,
+  writeBatch,
+} from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../lib/firebase';
 import { resizeImage } from '../lib/imageResize';
 import type { Category, Subcategory } from '../types';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface FormState {
   name: string;
@@ -33,6 +61,134 @@ function emptyForm(): FormState {
   };
 }
 
+interface SortableCategoryRowProps {
+  category: Category;
+  onEdit: (category: Category) => void;
+  onDelete: (id: string) => void;
+}
+
+function SortableCategoryRow({ category, onEdit, onDelete }: SortableCategoryRowProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: category.id!,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <tr ref={setNodeRef} style={style} className="border-b">
+      <td className="py-2 pr-2">
+        <button
+          className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-100 rounded"
+          {...attributes}
+          {...listeners}
+        >
+          <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+          </svg>
+        </button>
+      </td>
+      <td className="py-2 pr-2">
+        <span className="inline-block px-2 py-1 text-xs rounded bg-blue-100 text-blue-800">Category</span>
+      </td>
+      <td className="py-2 pr-2">
+        {category.cover_image ? (
+          <img src={category.cover_image} alt={category.name} className="w-12 h-15 object-cover border rounded" />
+        ) : (
+          <div className="w-12 h-15 bg-gray-200 border rounded flex items-center justify-center text-xs text-gray-400">
+            No image
+          </div>
+        )}
+      </td>
+      <td className="py-2 pr-2 font-medium">{category.name}</td>
+      <td className="py-2 pr-2">{category.slug}</td>
+      <td className="py-2 pr-2">{category.order}</td>
+      <td className="py-2 pr-2">{category.visible ? 'Yes' : 'No'}</td>
+      <td className="py-2 pr-2">
+        {category.hasSubcategories ? (
+          <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Yes</span>
+        ) : (
+          <span className="text-xs text-gray-400">No</span>
+        )}
+      </td>
+      <td className="py-2 flex gap-2">
+        <button className="px-3 py-1 rounded border" onClick={() => onEdit(category)}>
+          Edit
+        </button>
+        <button className="px-3 py-1 rounded border text-red-600" onClick={() => onDelete(category.id!)}>
+          Delete
+        </button>
+      </td>
+    </tr>
+  );
+}
+
+interface SortableSubcategoryRowProps {
+  subcategory: Subcategory;
+  getCategoryName: (id: string) => string;
+  onEdit: (subcategory: Subcategory) => void;
+  onDelete: (id: string) => void;
+}
+
+function SortableSubcategoryRow({ subcategory, getCategoryName, onEdit, onDelete }: SortableSubcategoryRowProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: subcategory.id!,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <tr ref={setNodeRef} style={style} className="border-b bg-gray-50">
+      <td className="py-2 pr-2">
+        <button
+          className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-100 rounded"
+          {...attributes}
+          {...listeners}
+        >
+          <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+          </svg>
+        </button>
+      </td>
+      <td className="py-2 pr-2">
+        <span className="inline-block px-2 py-1 text-xs rounded bg-purple-100 text-purple-800">Subcategory</span>
+        <div className="text-xs text-gray-500 mt-1">of {getCategoryName(subcategory.parentCategoryId)}</div>
+      </td>
+      <td className="py-2 pr-2">
+        {subcategory.cover_image ? (
+          <img src={subcategory.cover_image} alt={subcategory.name} className="w-12 h-15 object-cover border rounded" />
+        ) : (
+          <div className="w-12 h-15 bg-gray-200 border rounded flex items-center justify-center text-xs text-gray-400">
+            No image
+          </div>
+        )}
+      </td>
+      <td className="py-2 pr-2 font-medium">{subcategory.name}</td>
+      <td className="py-2 pr-2">{subcategory.slug}</td>
+      <td className="py-2 pr-2">{subcategory.order}</td>
+      <td className="py-2 pr-2">{subcategory.visible ? 'Yes' : 'No'}</td>
+      <td className="py-2 pr-2">
+        <span className="text-xs text-gray-400">—</span>
+      </td>
+      <td className="py-2 flex gap-2">
+        <button className="px-3 py-1 rounded border" onClick={() => onEdit(subcategory)}>
+          Edit
+        </button>
+        <button className="px-3 py-1 rounded border text-red-600" onClick={() => onDelete(subcategory.id!)}>
+          Delete
+        </button>
+      </td>
+    </tr>
+  );
+}
+
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
@@ -40,6 +196,13 @@ export default function CategoriesPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   useEffect(() => {
     const qCat = query(collection(db, 'categories'), orderBy('order', 'asc'));
@@ -127,10 +290,11 @@ export default function CategoriesPage() {
   async function uploadCoverImageIfNeeded(existingUrl?: string): Promise<string> {
     if (!coverImageFile) return existingUrl || '';
     const resized = await resizeImage(coverImageFile, 192, 240);
-    const ext = 'webp';
+    // Preserve the original file extension and content type
+    const ext = resized.type === 'image/png' ? 'png' : 'jpg';
     const fileRef = ref(storage, `categories/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`);
     const buf = await resized.arrayBuffer();
-    await uploadBytes(fileRef, new Uint8Array(buf), { contentType: 'image/webp' });
+    await uploadBytes(fileRef, new Uint8Array(buf), { contentType: resized.type });
     return await getDownloadURL(fileRef);
   }
 
@@ -204,6 +368,68 @@ export default function CategoriesPage() {
   function getCategoryName(categoryId: string): string {
     const cat = categories.find(c => c.id === categoryId);
     return cat ? cat.name : 'Unknown';
+  }
+
+  async function handleCategoryDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = categories.findIndex((c) => c.id === active.id);
+    const newIndex = categories.findIndex((c) => c.id === over.id);
+
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const reorderedCategories = arrayMove(categories, oldIndex, newIndex);
+
+    // Update local state immediately for better UX
+    setCategories(reorderedCategories);
+
+    // Update Firestore with new order values
+    const batch = writeBatch(db);
+    reorderedCategories.forEach((category, index) => {
+      if (category.id) {
+        batch.update(doc(db, 'categories', category.id), { order: index });
+      }
+    });
+
+    try {
+      await batch.commit();
+    } catch (error) {
+      console.error('Error updating category order:', error);
+      // Revert on error - the snapshot listener will restore the correct order
+    }
+  }
+
+  async function handleSubcategoryDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = subcategories.findIndex((s) => s.id === active.id);
+    const newIndex = subcategories.findIndex((s) => s.id === over.id);
+
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const reorderedSubcategories = arrayMove(subcategories, oldIndex, newIndex);
+
+    // Update local state immediately for better UX
+    setSubcategories(reorderedSubcategories);
+
+    // Update Firestore with new order values
+    const batch = writeBatch(db);
+    reorderedSubcategories.forEach((subcategory, index) => {
+      if (subcategory.id) {
+        batch.update(doc(db, 'subcategories', subcategory.id), { order: index });
+      }
+    });
+
+    try {
+      await batch.commit();
+    } catch (error) {
+      console.error('Error updating subcategory order:', error);
+      // Revert on error - the snapshot listener will restore the correct order
+    }
   }
 
   return (
@@ -363,11 +589,12 @@ export default function CategoriesPage() {
         </section>
 
         <section className="bg-white border rounded p-4 flex-1 min-w-0">
-          <h3 className="font-medium mb-3">Existing Categories & Subcategories</h3>
+          <h3 className="font-medium mb-3">Existing Categories & Subcategories (Drag to reorder)</h3>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left border-b">
+                  <th className="py-2 pr-2 w-10"></th>
                   <th className="py-2 pr-2">Type</th>
                   <th className="py-2 pr-2">Cover</th>
                   <th className="py-2 pr-2">Name</th>
@@ -378,67 +605,35 @@ export default function CategoriesPage() {
                   <th className="py-2">Actions</th>
                 </tr>
               </thead>
-              <tbody>
-                {categories.map((c) => (
-                  <tr key={`cat-${c.id}`} className="border-b">
-                    <td className="py-2 pr-2">
-                      <span className="inline-block px-2 py-1 text-xs rounded bg-blue-100 text-blue-800">Category</span>
-                    </td>
-                    <td className="py-2 pr-2">
-                      {c.cover_image ? (
-                        <img src={c.cover_image} alt={c.name} className="w-12 h-15 object-cover border rounded" />
-                      ) : (
-                        <div className="w-12 h-15 bg-gray-200 border rounded flex items-center justify-center text-xs text-gray-400">
-                          No image
-                        </div>
-                      )}
-                    </td>
-                    <td className="py-2 pr-2 font-medium">{c.name}</td>
-                    <td className="py-2 pr-2">{c.slug}</td>
-                    <td className="py-2 pr-2">{c.order}</td>
-                    <td className="py-2 pr-2">{c.visible ? 'Yes' : 'No'}</td>
-                    <td className="py-2 pr-2">
-                      {c.hasSubcategories ? (
-                        <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Yes</span>
-                      ) : (
-                        <span className="text-xs text-gray-400">No</span>
-                      )}
-                    </td>
-                    <td className="py-2 flex gap-2">
-                      <button className="px-3 py-1 rounded border" onClick={() => startEditCategory(c)}>Edit</button>
-                      <button className="px-3 py-1 rounded border text-red-600" onClick={() => removeCategory(c.id!)}>Delete</button>
-                    </td>
-                  </tr>
-                ))}
-                {subcategories.map((s) => (
-                  <tr key={`sub-${s.id}`} className="border-b bg-gray-50">
-                    <td className="py-2 pr-2">
-                      <span className="inline-block px-2 py-1 text-xs rounded bg-purple-100 text-purple-800">Subcategory</span>
-                      <div className="text-xs text-gray-500 mt-1">of {getCategoryName(s.parentCategoryId)}</div>
-                    </td>
-                    <td className="py-2 pr-2">
-                      {s.cover_image ? (
-                        <img src={s.cover_image} alt={s.name} className="w-12 h-15 object-cover border rounded" />
-                      ) : (
-                        <div className="w-12 h-15 bg-gray-200 border rounded flex items-center justify-center text-xs text-gray-400">
-                          No image
-                        </div>
-                      )}
-                    </td>
-                    <td className="py-2 pr-2 font-medium">{s.name}</td>
-                    <td className="py-2 pr-2">{s.slug}</td>
-                    <td className="py-2 pr-2">{s.order}</td>
-                    <td className="py-2 pr-2">{s.visible ? 'Yes' : 'No'}</td>
-                    <td className="py-2 pr-2">
-                      <span className="text-xs text-gray-400">—</span>
-                    </td>
-                    <td className="py-2 flex gap-2">
-                      <button className="px-3 py-1 rounded border" onClick={() => startEditSubcategory(s)}>Edit</button>
-                      <button className="px-3 py-1 rounded border text-red-600" onClick={() => removeSubcategory(s.id!)}>Delete</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleCategoryDragEnd}>
+                <SortableContext items={categories.map((c) => c.id!)} strategy={verticalListSortingStrategy}>
+                  <tbody>
+                    {categories.map((c) => (
+                      <SortableCategoryRow
+                        key={c.id}
+                        category={c}
+                        onEdit={startEditCategory}
+                        onDelete={removeCategory}
+                      />
+                    ))}
+                  </tbody>
+                </SortableContext>
+              </DndContext>
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSubcategoryDragEnd}>
+                <SortableContext items={subcategories.map((s) => s.id!)} strategy={verticalListSortingStrategy}>
+                  <tbody>
+                    {subcategories.map((s) => (
+                      <SortableSubcategoryRow
+                        key={s.id}
+                        subcategory={s}
+                        getCategoryName={getCategoryName}
+                        onEdit={startEditSubcategory}
+                        onDelete={removeSubcategory}
+                      />
+                    ))}
+                  </tbody>
+                </SortableContext>
+              </DndContext>
             </table>
           </div>
         </section>

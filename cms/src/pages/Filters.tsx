@@ -9,11 +9,29 @@ import {
   query,
   orderBy,
   serverTimestamp,
+  writeBatch,
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../lib/firebase';
 import { resizeImage } from '../lib/imageResize';
 import type { Category, Filter, Subcategory } from '../types';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 function emptyFilter(): Omit<Filter, 'id'> {
   return {
@@ -26,7 +44,82 @@ function emptyFilter(): Omit<Filter, 'id'> {
     isPro: false,
     popularity: 0,
     order: 0,
+    visible: true,
+    supports_reference_images: false,
+    max_reference_images: 1,
   };
+}
+
+interface SortableRowProps {
+  filter: Filter;
+  categories: Category[];
+  subcategories: Subcategory[];
+  onEdit: (filter: Filter) => void;
+  onDelete: (id: string) => void;
+}
+
+function SortableRow({ filter, categories, subcategories, onEdit, onDelete }: SortableRowProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: filter.id!,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  const category = categories.find((c) => c.id === filter.category);
+  const subcategory = filter.subcategory ? subcategories.find((s) => s.id === filter.subcategory) : null;
+
+  return (
+    <tr ref={setNodeRef} style={style} className="border-b last:border-0">
+      <td className="py-2 pr-2">
+        <button
+          className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-100 rounded"
+          {...attributes}
+          {...listeners}
+        >
+          <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+          </svg>
+        </button>
+      </td>
+      <td className="py-2 pr-2">
+        {filter.thumb_128 ? (
+          <img src={filter.thumb_128} alt={filter.name} className="w-8 h-8 object-cover border rounded" />
+        ) : (
+          <div className="w-8 h-8 bg-gray-200 border rounded flex items-center justify-center text-xs text-gray-400">
+            ?
+          </div>
+        )}
+      </td>
+      <td className="py-2 pr-2 font-medium">{filter.name}</td>
+      <td className="py-2 pr-2">{category ? category.name : filter.category}</td>
+      <td className="py-2 pr-2">
+        {subcategory ? (
+          <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">{subcategory.name}</span>
+        ) : (
+          <span className="text-xs text-gray-400">—</span>
+        )}
+      </td>
+      <td className="py-2 pr-2">{filter.popularity}</td>
+      <td className="py-2 pr-2">{filter.order}</td>
+      <td className="py-2 pr-2">
+        <span className={`text-xs px-2 py-1 rounded ${filter.visible ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+          {filter.visible ? 'Yes' : 'No'}
+        </span>
+      </td>
+      <td className="py-2 flex gap-2">
+        <button className="px-3 py-1 rounded border" onClick={() => onEdit(filter)}>
+          Edit
+        </button>
+        <button className="px-3 py-1 rounded border text-red-600" onClick={() => onDelete(filter.id!)}>
+          Delete
+        </button>
+      </td>
+    </tr>
+  );
 }
 
 export default function FiltersPage() {
@@ -37,6 +130,13 @@ export default function FiltersPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   useEffect(() => {
     const qf = query(collection(db, 'filters_feed'), orderBy('order', 'asc'));
@@ -65,11 +165,12 @@ export default function FiltersPage() {
 
   async function uploadThumbIfNeeded(existingUrl?: string): Promise<string> {
     if (!file) return existingUrl || '';
-    const resized = await resizeImage(file, 128, 128);
-    const ext = 'webp';
+    const resized = await resizeImage(file, 192, 240);
+    // Preserve the original file extension and content type
+    const ext = resized.type === 'image/png' ? 'png' : 'jpg';
     const fileRef = ref(storage, `filters/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`);
     const buf = await resized.arrayBuffer();
-    await uploadBytes(fileRef, new Uint8Array(buf), { contentType: 'image/webp' });
+    await uploadBytes(fileRef, new Uint8Array(buf), { contentType: resized.type });
     return await getDownloadURL(fileRef);
   }
 
@@ -145,6 +246,37 @@ export default function FiltersPage() {
     setEditingId(id!);
   }
 
+  async function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = filters.findIndex((f) => f.id === active.id);
+    const newIndex = filters.findIndex((f) => f.id === over.id);
+
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const reorderedFilters = arrayMove(filters, oldIndex, newIndex);
+
+    // Update local state immediately for better UX
+    setFilters(reorderedFilters);
+
+    // Update Firestore with new order values
+    const batch = writeBatch(db);
+    reorderedFilters.forEach((filter, index) => {
+      if (filter.id) {
+        batch.update(doc(db, 'filters_feed', filter.id), { order: index });
+      }
+    });
+
+    try {
+      await batch.commit();
+    } catch (error) {
+      console.error('Error updating filter order:', error);
+      // Revert on error - the snapshot listener will restore the correct order
+    }
+  }
+
   async function remove(id: string) {
     if (!confirm('Delete this filter?')) return;
     await deleteDoc(doc(db, 'filters_feed', id));
@@ -216,7 +348,7 @@ export default function FiltersPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm mb-1">Order (auto-assigned, editable)</label>
+                <label className="block text-sm mb-1">Order</label>
                 <input
                   type="number"
                   className="w-full border rounded px-3 py-2 bg-gray-50"
@@ -235,6 +367,38 @@ export default function FiltersPage() {
               />
               <label htmlFor="isPro">Premium (Pro)</label>
             </div>
+            <div className="flex items-center gap-2">
+              <input
+                id="visible"
+                type="checkbox"
+                checked={form.visible}
+                onChange={(e) => setForm((f) => ({ ...f, visible: e.target.checked }))}
+              />
+              <label htmlFor="visible">Visible</label>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                id="supports_reference_images"
+                type="checkbox"
+                checked={form.supports_reference_images || false}
+                onChange={(e) => setForm((f) => ({ ...f, supports_reference_images: e.target.checked }))}
+              />
+              <label htmlFor="supports_reference_images">Supports Reference Images</label>
+            </div>
+            {form.supports_reference_images && (
+              <div>
+                <label className="block text-sm mb-1">Max Reference Images</label>
+                <select
+                  className="w-full border rounded px-3 py-2"
+                  value={form.max_reference_images || 1}
+                  onChange={(e) => setForm((f) => ({ ...f, max_reference_images: Number(e.target.value) }))}
+                >
+                  <option value={1}>1</option>
+                  <option value={2}>2</option>
+                  <option value={3}>3</option>
+                </select>
+              </div>
+            )}
             <div>
               <label className="block text-sm mb-1">Prompt</label>
               <textarea
@@ -256,7 +420,7 @@ export default function FiltersPage() {
             </div>
             <div>
               <label className="block text-sm mb-1">
-                Thumbnail (128×128)
+                Thumbnail (192×240)
                 {form.thumb_128 && !file && form.subcategory && ' (inherited from subcategory)'}
                 {form.thumb_128 && !file && !form.subcategory && form.category && ' (inherited from category)'}
                 {form.thumb_128 && file && ' (new image selected)'}
@@ -295,55 +459,39 @@ export default function FiltersPage() {
         </section>
 
         <section className="bg-white border rounded p-4 flex-1 min-w-0">
-          <h3 className="font-medium mb-3">Existing</h3>
+          <h3 className="font-medium mb-3">Existing (Drag to reorder)</h3>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left border-b">
-                  <th className="py-2 pr-2">Thumb</th>
-                  <th className="py-2 pr-2">Name</th>
-                  <th className="py-2 pr-2">Category</th>
-                  <th className="py-2 pr-2">Subcategory</th>
-                  <th className="py-2 pr-2">Popularity</th>
-                  <th className="py-2 pr-2">Order</th>
-                  <th className="py-2">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filters.map((f) => {
-                  const category = categories.find((c) => c.id === f.category);
-                  const subcategory = f.subcategory ? subcategories.find((s) => s.id === f.subcategory) : null;
-                  return (
-                    <tr key={f.id} className="border-b last:border-0">
-                      <td className="py-2 pr-2">
-                        {f.thumb_128 ? (
-                          <img src={f.thumb_128} alt={f.name} className="w-8 h-8 object-cover border rounded" />
-                        ) : (
-                          <div className="w-8 h-8 bg-gray-200 border rounded flex items-center justify-center text-xs text-gray-400">
-                            ?
-                          </div>
-                        )}
-                      </td>
-                      <td className="py-2 pr-2 font-medium">{f.name}</td>
-                      <td className="py-2 pr-2">{category ? category.name : f.category}</td>
-                      <td className="py-2 pr-2">
-                        {subcategory ? (
-                          <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">{subcategory.name}</span>
-                        ) : (
-                          <span className="text-xs text-gray-400">—</span>
-                        )}
-                      </td>
-                      <td className="py-2 pr-2">{f.popularity}</td>
-                      <td className="py-2 pr-2">{f.order}</td>
-                      <td className="py-2 flex gap-2">
-                        <button className="px-3 py-1 rounded border" onClick={() => startEdit(f)}>Edit</button>
-                        <button className="px-3 py-1 rounded border text-red-600" onClick={() => remove(f.id!)}>Delete</button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left border-b">
+                    <th className="py-2 pr-2 w-10"></th>
+                    <th className="py-2 pr-2">Thumb</th>
+                    <th className="py-2 pr-2">Name</th>
+                    <th className="py-2 pr-2">Category</th>
+                    <th className="py-2 pr-2">Subcategory</th>
+                    <th className="py-2 pr-2">Popularity</th>
+                    <th className="py-2 pr-2">Order</th>
+                    <th className="py-2 pr-2">Visible</th>
+                    <th className="py-2">Actions</th>
+                  </tr>
+                </thead>
+                <SortableContext items={filters.map((f) => f.id!)} strategy={verticalListSortingStrategy}>
+                  <tbody>
+                    {filters.map((f) => (
+                      <SortableRow
+                        key={f.id}
+                        filter={f}
+                        categories={categories}
+                        subcategories={subcategories}
+                        onEdit={startEdit}
+                        onDelete={remove}
+                      />
+                    ))}
+                  </tbody>
+                </SortableContext>
+              </table>
+            </DndContext>
           </div>
         </section>
       </div>

@@ -11,6 +11,9 @@ export interface Filter {
   isPro: boolean;
   popularity: number;
   order: number;
+  visible: boolean;
+  supports_reference_images?: boolean; // whether this filter supports reference images
+  max_reference_images?: number; // maximum number of reference images (1, 2, or 3)
   updatedAt?: Timestamp; // set by server
 }
 

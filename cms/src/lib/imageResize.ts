@@ -13,12 +13,16 @@ export async function resizeImage(
   return new Promise((resolve, reject) => {
     const img = new Image();
     const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { alpha: true });
 
     if (!ctx) {
       reject(new Error('Failed to get canvas context'));
       return;
     }
+    
+    // Disable image smoothing for better quality with transparency
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
 
     img.onload = () => {
       const targetAspect = targetWidth / targetHeight;
@@ -45,6 +49,9 @@ export async function resizeImage(
 
       // Clear canvas to ensure transparency is preserved
       ctx.clearRect(0, 0, targetWidth, targetHeight);
+      
+      // Set composite operation to preserve alpha channel
+      ctx.globalCompositeOperation = 'source-over';
 
       // Draw cropped and scaled image
       ctx.drawImage(
@@ -66,6 +73,7 @@ export async function resizeImage(
       canvas.toBlob(
         (blob) => {
           if (!blob) {
+            URL.revokeObjectURL(img.src);
             reject(new Error('Failed to create blob'));
             return;
           }
@@ -73,6 +81,7 @@ export async function resizeImage(
             type: outputType,
             lastModified: Date.now(),
           });
+          URL.revokeObjectURL(img.src);
           resolve(resizedFile);
         },
         outputType,
@@ -80,7 +89,10 @@ export async function resizeImage(
       );
     };
 
-    img.onerror = () => reject(new Error('Failed to load image'));
+    img.onerror = () => {
+      URL.revokeObjectURL(img.src);
+      reject(new Error('Failed to load image'));
+    };
     img.src = URL.createObjectURL(file);
   });
 }
