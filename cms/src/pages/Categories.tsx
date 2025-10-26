@@ -79,10 +79,10 @@ function SortableCategoryRow({ category, onEdit, onDelete }: SortableCategoryRow
   };
 
   return (
-    <tr ref={setNodeRef} style={style} className="border-b">
-      <td className="py-2 pr-2">
+    <tr ref={setNodeRef} style={style} className="border-b hover:bg-gray-50 transition-colors">
+      <td className="py-3 pr-3">
         <button
-          className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-100 rounded"
+          className="cursor-grab active:cursor-grabbing p-1.5 hover:bg-indigo-50 rounded-lg transition-colors"
           {...attributes}
           {...listeners}
         >
@@ -91,34 +91,74 @@ function SortableCategoryRow({ category, onEdit, onDelete }: SortableCategoryRow
           </svg>
         </button>
       </td>
-      <td className="py-2 pr-2">
-        <span className="inline-block px-2 py-1 text-xs rounded bg-blue-100 text-blue-800">Category</span>
-      </td>
-      <td className="py-2 pr-2">
+      <td className="py-3 pr-3">
         {category.cover_image ? (
-          <img src={category.cover_image} alt={category.name} className="w-12 h-15 object-cover border rounded" />
+          <img src={category.cover_image} alt={category.name} className="w-12 h-15 object-cover border-2 border-gray-200 rounded-lg shadow-sm" />
         ) : (
-          <div className="w-12 h-15 bg-gray-200 border rounded flex items-center justify-center text-xs text-gray-400">
-            No image
+          <div className="w-12 h-15 bg-gradient-to-br from-gray-100 to-gray-200 border-2 border-gray-300 rounded-lg flex items-center justify-center text-xs text-gray-400">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
           </div>
         )}
       </td>
-      <td className="py-2 pr-2 font-medium">{category.name}</td>
-      <td className="py-2 pr-2">{category.slug}</td>
-      <td className="py-2 pr-2">{category.order}</td>
-      <td className="py-2 pr-2">{category.visible ? 'Yes' : 'No'}</td>
-      <td className="py-2 pr-2">
-        {category.hasSubcategories ? (
-          <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Yes</span>
+      <td className="py-3 pr-3">
+        <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-sm">
+          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+          </svg>
+          Category
+        </span>
+      </td>
+      <td className="py-3 pr-3 font-semibold text-gray-900">{category.name}</td>
+      <td className="py-3 pr-3 text-sm text-gray-600 font-mono">{category.slug}</td>
+      <td className="py-3 pr-3 text-sm text-gray-700 font-medium">{category.order}</td>
+      <td className="py-3 pr-3">
+        {category.visible ? (
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+            </svg>
+            Yes
+          </span>
         ) : (
-          <span className="text-xs text-gray-400">No</span>
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600">
+            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+            </svg>
+            No
+          </span>
         )}
       </td>
-      <td className="py-2 flex gap-2">
-        <button className="px-3 py-1 rounded border" onClick={() => onEdit(category)}>
+      <td className="py-3 pr-3">
+        {category.hasSubcategories ? (
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full bg-emerald-100 text-emerald-800">
+            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+            </svg>
+            Yes
+          </span>
+        ) : (
+          <span className="text-xs text-gray-400">—</span>
+        )}
+      </td>
+      <td className="py-3 flex gap-2">
+        <button 
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 border-indigo-600 text-indigo-600 font-medium hover:bg-indigo-600 hover:text-white transition-all duration-200 shadow-sm hover:shadow-md" 
+          onClick={() => onEdit(category)}
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          </svg>
           Edit
         </button>
-        <button className="px-3 py-1 rounded border text-red-600" onClick={() => onDelete(category.id!)}>
+        <button 
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 border-red-500 text-red-600 font-medium hover:bg-red-600 hover:text-white transition-all duration-200 shadow-sm hover:shadow-md" 
+          onClick={() => onDelete(category.id!)}
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
           Delete
         </button>
       </td>
@@ -145,10 +185,10 @@ function SortableSubcategoryRow({ subcategory, getCategoryName, onEdit, onDelete
   };
 
   return (
-    <tr ref={setNodeRef} style={style} className="border-b bg-gray-50">
-      <td className="py-2 pr-2">
+    <tr ref={setNodeRef} style={style} className="border-b bg-purple-50/30 hover:bg-purple-50/60 transition-colors">
+      <td className="py-3 pr-3">
         <button
-          className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-100 rounded"
+          className="cursor-grab active:cursor-grabbing p-1.5 hover:bg-purple-100 rounded-lg transition-colors"
           {...attributes}
           {...listeners}
         >
@@ -157,31 +197,68 @@ function SortableSubcategoryRow({ subcategory, getCategoryName, onEdit, onDelete
           </svg>
         </button>
       </td>
-      <td className="py-2 pr-2">
-        <span className="inline-block px-2 py-1 text-xs rounded bg-purple-100 text-purple-800">Subcategory</span>
-        <div className="text-xs text-gray-500 mt-1">of {getCategoryName(subcategory.parentCategoryId)}</div>
-      </td>
-      <td className="py-2 pr-2">
+      <td className="py-3 pr-3">
         {subcategory.cover_image ? (
-          <img src={subcategory.cover_image} alt={subcategory.name} className="w-12 h-15 object-cover border rounded" />
+          <img src={subcategory.cover_image} alt={subcategory.name} className="w-12 h-15 object-cover border-2 border-purple-200 rounded-lg shadow-sm" />
         ) : (
-          <div className="w-12 h-15 bg-gray-200 border rounded flex items-center justify-center text-xs text-gray-400">
-            No image
+          <div className="w-12 h-15 bg-gradient-to-br from-purple-100 to-purple-200 border-2 border-purple-300 rounded-lg flex items-center justify-center text-xs text-purple-400">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
           </div>
         )}
       </td>
-      <td className="py-2 pr-2 font-medium">{subcategory.name}</td>
-      <td className="py-2 pr-2">{subcategory.slug}</td>
-      <td className="py-2 pr-2">{subcategory.order}</td>
-      <td className="py-2 pr-2">{subcategory.visible ? 'Yes' : 'No'}</td>
-      <td className="py-2 pr-2">
+      <td className="py-3 pr-3">
+        <div className="flex flex-col gap-1">
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-sm w-fit">
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+            </svg>
+            Subcategory
+          </span>
+          <div className="text-xs text-purple-700 font-medium">↳ {getCategoryName(subcategory.parentCategoryId)}</div>
+        </div>
+      </td>
+      <td className="py-3 pr-3 font-semibold text-gray-900">{subcategory.name}</td>
+      <td className="py-3 pr-3 text-sm text-gray-600 font-mono">{subcategory.slug}</td>
+      <td className="py-3 pr-3 text-sm text-gray-700 font-medium">{subcategory.order}</td>
+      <td className="py-3 pr-3">
+        {subcategory.visible ? (
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+            </svg>
+            Yes
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600">
+            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+            </svg>
+            No
+          </span>
+        )}
+      </td>
+      <td className="py-3 pr-3">
         <span className="text-xs text-gray-400">—</span>
       </td>
-      <td className="py-2 flex gap-2">
-        <button className="px-3 py-1 rounded border" onClick={() => onEdit(subcategory)}>
+      <td className="py-3 flex gap-2">
+        <button 
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 border-indigo-600 text-indigo-600 font-medium hover:bg-indigo-600 hover:text-white transition-all duration-200 shadow-sm hover:shadow-md" 
+          onClick={() => onEdit(subcategory)}
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          </svg>
           Edit
         </button>
-        <button className="px-3 py-1 rounded border text-red-600" onClick={() => onDelete(subcategory.id!)}>
+        <button 
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 border-red-500 text-red-600 font-medium hover:bg-red-600 hover:text-white transition-all duration-200 shadow-sm hover:shadow-md" 
+          onClick={() => onDelete(subcategory.id!)}
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
           Delete
         </button>
       </td>
@@ -448,162 +525,24 @@ export default function CategoriesPage() {
     <div className="w-full">
 
       <div className="flex gap-6">
-        <section className="bg-white border rounded p-4 w-96 flex-shrink-0">
-          <h3 className="font-medium mb-3">{title}</h3>
-          <form onSubmit={handleSubmit} className="space-y-3">
-            <div>
-              <label className="block text-sm mb-1">Name</label>
-              <input
-                className="w-full border rounded px-3 py-2"
-                value={form.name}
-                onChange={(e) => handleNameChange(e.target.value)}
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm mb-1">Slug (auto-generated, editable)</label>
-              <input
-                className="w-full border rounded px-3 py-2 bg-gray-50"
-                value={form.slug}
-                onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))}
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm mb-1">Order (auto-assigned, editable)</label>
-              <input
-                type="number"
-                className="w-full border rounded px-3 py-2 bg-gray-50"
-                value={form.order}
-                onChange={(e) => setForm((f) => ({ ...f, order: Number(e.target.value) }))}
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm mb-1">
-                Cover Image (192×240) 
-                {form.cover_image && !coverImageFile && form.isSubcategory && form.parentCategoryId && ' (inherited from parent)'}
-                {form.cover_image && !form.isSubcategory && ' (will keep if not replaced)'}
-                {form.cover_image && coverImageFile && ' (new image selected)'}
-              </label>
-              <input type="file" accept="image/*" onChange={(e) => setCoverImageFile(e.target.files?.[0] || null)} />
-              {form.cover_image && (
-                <div className="mt-2">
-                  <img src={form.cover_image} alt="Cover preview" className="w-24 h-30 object-cover border rounded" />
-                  {form.isSubcategory && form.parentCategoryId && !coverImageFile && (
-                    <p className="text-xs text-gray-500 mt-1">Using parent category image</p>
-                  )}
-                </div>
-              )}
-            </div>
-            <div>
-              <label className="block text-sm mb-1">Description</label>
-              <textarea
-                className="w-full border rounded px-3 py-2"
-                value={form.description || ''}
-                onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <input
-                id="visible"
-                type="checkbox"
-                checked={form.visible}
-                onChange={(e) => setForm((f) => ({ ...f, visible: e.target.checked }))}
-              />
-              <label htmlFor="visible">Visible</label>
-            </div>
-            {!form.isSubcategory && (
-              <div className="flex items-center gap-2">
-                <input
-                  id="hasSubcategories"
-                  type="checkbox"
-                  checked={form.hasSubcategories}
-                  onChange={(e) => setForm((f) => ({ ...f, hasSubcategories: e.target.checked }))}
-                />
-                <label htmlFor="hasSubcategories">Has Subcategories</label>
+        <section className="bg-white border-2 border-gray-200 rounded-xl shadow-lg p-6 flex-1 min-w-0">
+          <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
               </div>
-            )}
-            <div className="flex items-center gap-2">
-              <input
-                id="isSubcategory"
-                type="checkbox"
-                checked={form.isSubcategory}
-                onChange={(e) => {
-                  const isSubcat = e.target.checked;
-                  const items = isSubcat ? subcategories : categories;
-                  const maxOrder = items.length === 0 ? 0 : Math.max(...items.map(item => item.order || 0));
-                  const nextOrder = maxOrder + 1;
-                  
-                  setForm((f) => ({ 
-                    ...f, 
-                    isSubcategory: isSubcat, 
-                    parentCategoryId: undefined,
-                    order: nextOrder
-                  }));
-                }}
-                disabled={!!editingId}
-              />
-              <label htmlFor="isSubcategory">Is Subcategory</label>
-              {editingId && <span className="text-xs text-gray-500">(cannot change type when editing)</span>}
-            </div>
-            {form.isSubcategory && (
               <div>
-                <label className="block text-sm mb-1">Parent Category *</label>
-                <select
-                  className="w-full border rounded px-3 py-2"
-                  value={form.parentCategoryId || ''}
-                  onChange={(e) => setForm((f) => ({ ...f, parentCategoryId: e.target.value }))}
-                  required
-                >
-                  <option value="">Select a parent category</option>
-                  {categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </option>
-                  ))}
-                </select>
+                <h3 className="font-bold text-lg text-gray-900">Categories & Subcategories</h3>
+                <p className="text-xs text-gray-500">Manage your content categories</p>
               </div>
-            )}
-            <div>
-              <label className="block text-sm mb-1">Tags (comma separated)</label>
-              <input
-                className="w-full border rounded px-3 py-2"
-                value={(form.tags || []).join(', ')}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, tags: e.target.value.split(',').map((t) => t.trim()).filter(Boolean) }))
-                }
-              />
             </div>
-            <div className="flex gap-2">
-              <button disabled={loading} className="px-4 py-2 rounded bg-black text-white">
-                {editingId ? 'Save' : 'Create'}
-              </button>
-              {editingId && (
-                <button
-                  type="button"
-                  className="px-4 py-2 rounded border"
-                  onClick={() => {
-                    setEditingId(null);
-                    setForm(emptyForm());
-                    setCoverImageFile(null);
-                  }}
-                >
-                  Cancel
-                </button>
-              )}
-            </div>
-          </form>
-        </section>
-
-        <section className="bg-white border rounded p-4 flex-1 min-w-0">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-medium">Categories</h3>
             <div className="flex gap-3 items-center">
               <div className="flex items-center gap-2">
-                <label className="text-sm text-gray-600">View:</label>
+                <label className="text-sm font-medium text-gray-600">View:</label>
                 <select
-                  className="border rounded px-3 py-1 text-sm"
+                  className="border-2 border-gray-300 rounded-lg px-4 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all cursor-pointer bg-white"
                   value={viewFilter}
                   onChange={(e) => setViewFilter(e.target.value as 'both' | 'categories' | 'subcategories')}
                 >
@@ -613,25 +552,30 @@ export default function CategoriesPage() {
                 </select>
               </div>
               
-              <span className="text-sm text-gray-500">
-                ({visibleCategories.length + visibleSubcategories.length} displayed)
-              </span>
+              <div className="flex items-center gap-2 px-3 py-2 bg-indigo-50 rounded-lg border border-indigo-200">
+                <svg className="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                <span className="text-sm font-semibold text-indigo-900">
+                  {visibleCategories.length + visibleSubcategories.length} displayed
+                </span>
+              </div>
             </div>
           </div>
           
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto rounded-lg border border-gray-200">
             <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left border-b">
-                  <th className="py-2 pr-2 w-10"></th>
-                  <th className="py-2 pr-2">Type</th>
-                  <th className="py-2 pr-2">Cover</th>
-                  <th className="py-2 pr-2">Name</th>
-                  <th className="py-2 pr-2">Slug</th>
-                  <th className="py-2 pr-2">Order</th>
-                  <th className="py-2 pr-2">Visible</th>
-                  <th className="py-2 pr-2">Has Subs</th>
-                  <th className="py-2">Actions</th>
+              <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
+                <tr className="text-left border-b-2 border-gray-200">
+                  <th className="py-3 pr-3 pl-3 font-bold text-gray-700 text-xs uppercase tracking-wider"></th>
+                  <th className="py-3 pr-3 font-bold text-gray-700 text-xs uppercase tracking-wider">Cover</th>
+                  <th className="py-3 pr-3 font-bold text-gray-700 text-xs uppercase tracking-wider">Type</th>
+                  <th className="py-3 pr-3 font-bold text-gray-700 text-xs uppercase tracking-wider">Name</th>
+                  <th className="py-3 pr-3 font-bold text-gray-700 text-xs uppercase tracking-wider">Slug</th>
+                  <th className="py-3 pr-3 font-bold text-gray-700 text-xs uppercase tracking-wider">Order</th>
+                  <th className="py-3 pr-3 font-bold text-gray-700 text-xs uppercase tracking-wider">Visible</th>
+                  <th className="py-3 pr-3 font-bold text-gray-700 text-xs uppercase tracking-wider">Has Subs</th>
+                  <th className="py-3 pr-3 font-bold text-gray-700 text-xs uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               {viewFilter !== 'subcategories' && (
@@ -669,6 +613,239 @@ export default function CategoriesPage() {
               )}
             </table>
           </div>
+        </section>
+
+        <section className="bg-white border-2 border-gray-200 rounded-xl shadow-lg p-6 w-96 flex-shrink-0 h-fit sticky top-24">
+          <div className="flex items-center gap-3 mb-5 pb-4 border-b border-gray-200">
+            <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+            </div>
+            <h3 className="font-bold text-lg text-gray-900">{title}</h3>
+          </div>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Name *</label>
+              <input
+                className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                value={form.name}
+                onChange={(e) => handleNameChange(e.target.value)}
+                required
+                placeholder="Enter name"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Slug 
+                <span className="text-xs font-normal text-gray-500 ml-1">(auto-generated, editable)</span>
+              </label>
+              <input
+                className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all font-mono text-sm"
+                value={form.slug}
+                onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))}
+                required
+                placeholder="auto-generated-slug"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Order 
+                <span className="text-xs font-normal text-gray-500 ml-1">(auto-assigned, editable)</span>
+              </label>
+              <input
+                type="number"
+                className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                value={form.order}
+                onChange={(e) => setForm((f) => ({ ...f, order: Number(e.target.value) }))}
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Cover Image 
+                <span className="text-xs font-normal text-gray-500 ml-1">(192×240)</span>
+              </label>
+              <input 
+                type="file" 
+                accept="image/*" 
+                onChange={(e) => setCoverImageFile(e.target.files?.[0] || null)}
+                className="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 file:cursor-pointer cursor-pointer"
+              />
+              {form.cover_image && (
+                <div className="mt-3 p-3 bg-gray-50 rounded-lg border-2 border-gray-200">
+                  <img src={form.cover_image} alt="Cover preview" className="w-24 h-30 object-cover border-2 border-gray-300 rounded-lg shadow-sm mx-auto" />
+                  {form.isSubcategory && form.parentCategoryId && !coverImageFile && (
+                    <p className="text-xs text-gray-600 mt-2 text-center flex items-center justify-center gap-1">
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Using parent category image
+                    </p>
+                  )}
+                  {coverImageFile && (
+                    <p className="text-xs text-indigo-600 mt-2 text-center font-medium flex items-center justify-center gap-1">
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      New image selected
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Description</label>
+              <textarea
+                className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all resize-none"
+                value={form.description || ''}
+                onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+                rows={3}
+                placeholder="Optional description"
+              />
+            </div>
+            <div className="space-y-3 py-3 border-t border-gray-200">
+              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                <input
+                  id="visible"
+                  type="checkbox"
+                  checked={form.visible}
+                  onChange={(e) => setForm((f) => ({ ...f, visible: e.target.checked }))}
+                  className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer"
+                />
+                <label htmlFor="visible" className="text-sm font-medium text-gray-700 cursor-pointer flex-1">Visible</label>
+                {form.visible && (
+                  <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                    <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                  </svg>
+                )}
+              </div>
+              {!form.isSubcategory && (
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                  <input
+                    id="hasSubcategories"
+                    type="checkbox"
+                    checked={form.hasSubcategories}
+                    onChange={(e) => setForm((f) => ({ ...f, hasSubcategories: e.target.checked }))}
+                    className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer"
+                  />
+                  <label htmlFor="hasSubcategories" className="text-sm font-medium text-gray-700 cursor-pointer flex-1">Has Subcategories</label>
+                  {form.hasSubcategories && (
+                    <svg className="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  )}
+                </div>
+              )}
+              <div className="flex items-start gap-3 p-3 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors">
+                <input
+                  id="isSubcategory"
+                  type="checkbox"
+                  checked={form.isSubcategory}
+                  onChange={(e) => {
+                    const isSubcat = e.target.checked;
+                    const items = isSubcat ? subcategories : categories;
+                    const maxOrder = items.length === 0 ? 0 : Math.max(...items.map(item => item.order || 0));
+                    const nextOrder = maxOrder + 1;
+                    
+                    setForm((f) => ({ 
+                      ...f, 
+                      isSubcategory: isSubcat, 
+                      parentCategoryId: undefined,
+                      order: nextOrder
+                    }));
+                  }}
+                  disabled={!!editingId}
+                  className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500 cursor-pointer mt-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+                />
+                <div className="flex-1">
+                  <label htmlFor="isSubcategory" className={`text-sm font-medium text-gray-700 ${editingId ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}>Is Subcategory</label>
+                  {editingId && <p className="text-xs text-gray-500 mt-1">Cannot change type when editing</p>}
+                </div>
+              </div>
+            </div>
+            {form.isSubcategory && (
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Parent Category *</label>
+                <select
+                  className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white cursor-pointer"
+                  value={form.parentCategoryId || ''}
+                  onChange={(e) => setForm((f) => ({ ...f, parentCategoryId: e.target.value }))}
+                  required
+                >
+                  <option value="">Select a parent category</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Tags 
+                <span className="text-xs font-normal text-gray-500 ml-1">(comma separated)</span>
+              </label>
+              <input
+                className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                value={(form.tags || []).join(', ')}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, tags: e.target.value.split(',').map((t) => t.trim()).filter(Boolean) }))
+                }
+                placeholder="tag1, tag2, tag3"
+              />
+              {form.tags && form.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {form.tags.map((tag, idx) => (
+                    <span key={idx} className="inline-flex items-center gap-1 px-2 py-1 bg-indigo-100 text-indigo-800 text-xs font-medium rounded-md">
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                      </svg>
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="flex gap-3 pt-4 border-t border-gray-200">
+              <button 
+                disabled={loading} 
+                className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
+              >
+                {loading ? (
+                  <>
+                    <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    {editingId ? 'Save Changes' : 'Create'}
+                  </>
+                )}
+              </button>
+              {editingId && (
+                <button
+                  type="button"
+                  className="px-5 py-3 rounded-lg border-2 border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition-all"
+                  onClick={() => {
+                    setEditingId(null);
+                    setForm(emptyForm());
+                    setCoverImageFile(null);
+                  }}
+                >
+                  Cancel
+                </button>
+              )}
+            </div>
+          </form>
         </section>
       </div>
     </div>
