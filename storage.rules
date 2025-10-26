@@ -12,6 +12,12 @@ service firebase.storage {
       allow read: if true;
       allow write: if true;
     }
+    
+    // Onboarding slider images - allow all reads and writes for development
+    match /onboarding_sliders/{allPaths=**} {
+      allow read: if true;
+      allow write: if true;
+    }
   }
 }
 

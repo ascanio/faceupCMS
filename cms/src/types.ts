@@ -43,3 +43,14 @@ export interface Subcategory {
 	updatedAt?: Timestamp; // set by server
 }
 
+export interface OnboardingSlider {
+	id?: string; // Firestore document id
+	title: string;
+	text: string;
+	before_image_url: string;
+	after_image_url: string;
+	order: number;
+	visible: boolean;
+	updatedAt?: Timestamp; // set by server
+}
+

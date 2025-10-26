@@ -18,6 +18,12 @@ service cloud.firestore {
       allow read: if true;
       allow write: if true;
     }
+    
+    // Onboarding sliders collection - allow all reads and writes for development
+    match /onboarding_sliders/{sliderId} {
+      allow read: if true;
+      allow write: if true;
+    }
   }
 }
 
