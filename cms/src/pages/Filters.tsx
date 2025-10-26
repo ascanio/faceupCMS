@@ -73,12 +73,14 @@ function SortableRow({ filter, categories, subcategories, onEdit, onDelete }: So
   const subcategory = filter.subcategory ? subcategories.find((s) => s.id === filter.subcategory) : null;
 
   return (
-    <tr ref={setNodeRef} style={style} className="border-b last:border-0 hover:bg-indigo-50/30 transition-colors">
+    <tr ref={setNodeRef} style={{...style, borderBottom: '1px solid rgba(20, 22, 25, 0.1)'}} className="last:border-0 hover:bg-gray-50 transition-colors">
       <td className="py-3 pr-3">
         <button
-          className="cursor-grab active:cursor-grabbing p-1.5 hover:bg-indigo-100 rounded-lg transition-colors"
+          className="cursor-grab active:cursor-grabbing p-1.5 rounded-lg transition-colors"
           {...attributes}
           {...listeners}
+          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 152, 39, 0.1)'}
+          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
         >
           <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
@@ -488,11 +490,11 @@ export default function FiltersPage() {
             </div>
           </div>
           
-          <div className="overflow-x-auto rounded-lg border border-gray-200">
+          <div className="overflow-x-auto rounded-lg" style={{ border: '1px solid rgba(20, 22, 25, 0.1)' }}>
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <table className="w-full text-sm">
                 <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
-                  <tr className="text-left border-b-2 border-gray-200">
+                  <tr className="text-left" style={{ borderBottom: '2px solid rgba(20, 22, 25, 0.1)' }}>
                     <th className="py-3 pr-3 pl-3 font-bold text-gray-700 text-xs uppercase tracking-wider"></th>
                     <th className="py-3 pr-3 font-bold text-gray-700 text-xs uppercase tracking-wider">Thumb</th>
                     <th className="py-3 pr-3 font-bold text-gray-700 text-xs uppercase tracking-wider">Name</th>

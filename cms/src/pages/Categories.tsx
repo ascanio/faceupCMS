@@ -76,10 +76,11 @@ function SortableCategoryRow({ category, onEdit, onDelete }: SortableCategoryRow
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
+    borderBottom: '1px solid rgba(20, 22, 25, 0.1)',
   };
 
   return (
-    <tr ref={setNodeRef} style={style} className="border-b hover:bg-gray-50 transition-colors">
+    <tr ref={setNodeRef} style={style} className="hover:bg-gray-50 transition-colors">
       <td className="py-3 pr-3">
         <button
           className="cursor-grab active:cursor-grabbing p-1.5 rounded-lg transition-colors"
@@ -203,10 +204,11 @@ function SortableSubcategoryRow({ subcategory, getCategoryName, onEdit, onDelete
     transition,
     opacity: isDragging ? 0.5 : 1,
     backgroundColor: 'rgba(255, 152, 39, 0.05)',
+    borderBottom: '1px solid rgba(20, 22, 25, 0.1)',
   };
 
   return (
-    <tr ref={setNodeRef} style={style} className="border-b hover:bg-gray-50 transition-colors">
+    <tr ref={setNodeRef} style={style} className="hover:bg-gray-50 transition-colors">
       <td className="py-3 pr-3">
         <button
           className="cursor-grab active:cursor-grabbing p-1.5 rounded-lg transition-colors"
@@ -604,10 +606,10 @@ export default function CategoriesPage() {
             </div>
           </div>
           
-          <div className="overflow-x-auto rounded-lg border border-gray-200">
+          <div className="overflow-x-auto rounded-lg" style={{ border: '1px solid rgba(20, 22, 25, 0.1)' }}>
             <table className="w-full text-sm">
               <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
-                <tr className="text-left border-b-2 border-gray-200">
+                <tr className="text-left" style={{ borderBottom: '2px solid rgba(20, 22, 25, 0.1)' }}>
                   <th className="py-3 pr-3 pl-3 font-bold text-gray-700 text-xs uppercase tracking-wider"></th>
                   <th className="py-3 pr-3 font-bold text-gray-700 text-xs uppercase tracking-wider">Cover</th>
                   <th className="py-3 pr-3 font-bold text-gray-700 text-xs uppercase tracking-wider">Type</th>
