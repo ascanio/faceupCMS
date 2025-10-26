@@ -130,6 +130,10 @@ export default function FiltersPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
+  
+  // Filter state for table
+  const [filterCategory, setFilterCategory] = useState<string>('');
+  const [filterSubcategory, setFilterSubcategory] = useState<string>('');
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -174,11 +178,32 @@ export default function FiltersPage() {
     return await getDownloadURL(fileRef);
   }
 
-  // Get filtered subcategories based on selected category
+  // Get filtered subcategories based on selected category in form
   const availableSubcategories = useMemo(() => {
     if (!form.category) return [];
     return subcategories.filter(sub => sub.parentCategoryId === form.category);
   }, [form.category, subcategories]);
+
+  // Get available subcategories for filter dropdown based on selected filter category
+  const availableFilterSubcategories = useMemo(() => {
+    if (!filterCategory) return subcategories;
+    return subcategories.filter(sub => sub.parentCategoryId === filterCategory);
+  }, [filterCategory, subcategories]);
+
+  // Filter the filters list based on selected category and/or subcategory
+  const filteredFilters = useMemo(() => {
+    let result = filters;
+    
+    if (filterCategory) {
+      result = result.filter(f => f.category === filterCategory);
+    }
+    
+    if (filterSubcategory) {
+      result = result.filter(f => f.subcategory === filterSubcategory);
+    }
+    
+    return result;
+  }, [filters, filterCategory, filterSubcategory]);
 
   // Auto-set order when creating new filter
   useEffect(() => {
@@ -213,6 +238,16 @@ export default function FiltersPage() {
       }
     }
   }, [form.category, form.subcategory, categories, subcategories, file, editingId]);
+
+  // Reset subcategory filter when category filter changes
+  useEffect(() => {
+    if (filterCategory && filterSubcategory) {
+      const subcategory = subcategories.find(s => s.id === filterSubcategory);
+      if (!subcategory || subcategory.parentCategoryId !== filterCategory) {
+        setFilterSubcategory('');
+      }
+    }
+  }, [filterCategory, filterSubcategory, subcategories]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -251,29 +286,58 @@ export default function FiltersPage() {
 
     if (!over || active.id === over.id) return;
 
-    const oldIndex = filters.findIndex((f) => f.id === active.id);
-    const newIndex = filters.findIndex((f) => f.id === over.id);
+    // When filtering is active, work with the filtered list
+    const workingList = filterCategory || filterSubcategory ? filteredFilters : filters;
+    
+    const oldIndex = workingList.findIndex((f) => f.id === active.id);
+    const newIndex = workingList.findIndex((f) => f.id === over.id);
 
     if (oldIndex === -1 || newIndex === -1) return;
 
-    const reorderedFilters = arrayMove(filters, oldIndex, newIndex);
+    const reorderedList = arrayMove(workingList, oldIndex, newIndex);
 
-    // Update local state immediately for better UX
-    setFilters(reorderedFilters);
+    // If filtering is active, only update the order of the filtered items
+    if (filterCategory || filterSubcategory) {
+      // Update local state for filtered items
+      const updatedFilters = filters.map(filter => {
+        const indexInReordered = reorderedList.findIndex(f => f.id === filter.id);
+        if (indexInReordered !== -1) {
+          return { ...filter, order: reorderedList[indexInReordered].order };
+        }
+        return filter;
+      });
+      setFilters(updatedFilters);
 
-    // Update Firestore with new order values
-    const batch = writeBatch(db);
-    reorderedFilters.forEach((filter, index) => {
-      if (filter.id) {
-        batch.update(doc(db, 'filters_feed', filter.id), { order: index });
+      // Update Firestore only for the reordered filtered items
+      const batch = writeBatch(db);
+      reorderedList.forEach((filter, index) => {
+        if (filter.id) {
+          const newOrder = index;
+          batch.update(doc(db, 'filters_feed', filter.id), { order: newOrder });
+        }
+      });
+
+      try {
+        await batch.commit();
+      } catch (error) {
+        console.error('Error updating filter order:', error);
       }
-    });
+    } else {
+      // No filtering - reorder entire list as before
+      setFilters(reorderedList);
 
-    try {
-      await batch.commit();
-    } catch (error) {
-      console.error('Error updating filter order:', error);
-      // Revert on error - the snapshot listener will restore the correct order
+      const batch = writeBatch(db);
+      reorderedList.forEach((filter, index) => {
+        if (filter.id) {
+          batch.update(doc(db, 'filters_feed', filter.id), { order: index });
+        }
+      });
+
+      try {
+        await batch.commit();
+      } catch (error) {
+        console.error('Error updating filter order:', error);
+      }
     }
   }
 
@@ -284,9 +348,6 @@ export default function FiltersPage() {
 
   return (
     <div className="w-full">
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold">Filters</h2>
-      </div>
 
       <div className="flex gap-6">
         <section className="bg-white border rounded p-4 w-96 flex-shrink-0">
@@ -459,7 +520,60 @@ export default function FiltersPage() {
         </section>
 
         <section className="bg-white border rounded p-4 flex-1 min-w-0">
-          <h3 className="font-medium mb-3">Existing (Drag to reorder)</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-medium">
+              Filters
+            </h3>
+            <div className="flex gap-3 items-center">
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-gray-600">Filter by:</label>
+                <select
+                  className="border rounded px-3 py-1 text-sm"
+                  value={filterCategory}
+                  onChange={(e) => setFilterCategory(e.target.value)}
+                >
+                  <option value="">All Categories</option>
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              
+              {filterCategory && (
+                <select
+                  className="border rounded px-3 py-1 text-sm"
+                  value={filterSubcategory}
+                  onChange={(e) => setFilterSubcategory(e.target.value)}
+                >
+                  <option value="">All Subcategories</option>
+                  {availableFilterSubcategories.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+              
+              {(filterCategory || filterSubcategory) && (
+                <button
+                  className="text-sm text-blue-600 hover:text-blue-800"
+                  onClick={() => {
+                    setFilterCategory('');
+                    setFilterSubcategory('');
+                  }}
+                >
+                  Clear filters
+                </button>
+              )}
+              
+              <span className="text-sm text-gray-500">
+                ({filteredFilters.length} of {filters.length})
+              </span>
+            </div>
+          </div>
+          
           <div className="overflow-x-auto">
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <table className="w-full text-sm">
@@ -476,9 +590,9 @@ export default function FiltersPage() {
                     <th className="py-2">Actions</th>
                   </tr>
                 </thead>
-                <SortableContext items={filters.map((f) => f.id!)} strategy={verticalListSortingStrategy}>
+                <SortableContext items={filteredFilters.map((f) => f.id!)} strategy={verticalListSortingStrategy}>
                   <tbody>
-                    {filters.map((f) => (
+                    {filteredFilters.map((f) => (
                       <SortableRow
                         key={f.id}
                         filter={f}

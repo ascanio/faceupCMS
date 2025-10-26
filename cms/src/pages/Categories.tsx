@@ -196,6 +196,9 @@ export default function CategoriesPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
+  
+  // View filter: 'both', 'categories', or 'subcategories'
+  const [viewFilter, setViewFilter] = useState<'both' | 'categories' | 'subcategories'>('both');
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -229,6 +232,15 @@ export default function CategoriesPage() {
     }
     return form.isSubcategory ? 'Create Subcategory' : 'Create Category';
   }, [editingId, form.isSubcategory]);
+
+  // Filtered lists based on view selection
+  const visibleCategories = useMemo(() => {
+    return viewFilter === 'subcategories' ? [] : categories;
+  }, [viewFilter, categories]);
+
+  const visibleSubcategories = useMemo(() => {
+    return viewFilter === 'categories' ? [] : subcategories;
+  }, [viewFilter, subcategories]);
 
   // Auto-generate slug from name
   const handleNameChange = (name: string) => {
@@ -434,9 +446,6 @@ export default function CategoriesPage() {
 
   return (
     <div className="w-full">
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold">Categories</h2>
-      </div>
 
       <div className="flex gap-6">
         <section className="bg-white border rounded p-4 w-96 flex-shrink-0">
@@ -513,7 +522,6 @@ export default function CategoriesPage() {
                   onChange={(e) => setForm((f) => ({ ...f, hasSubcategories: e.target.checked }))}
                 />
                 <label htmlFor="hasSubcategories">Has Subcategories</label>
-                <span className="text-xs text-gray-500">(auto-updated based on actual subcategories)</span>
               </div>
             )}
             <div className="flex items-center gap-2">
@@ -589,7 +597,28 @@ export default function CategoriesPage() {
         </section>
 
         <section className="bg-white border rounded p-4 flex-1 min-w-0">
-          <h3 className="font-medium mb-3">Existing Categories & Subcategories (Drag to reorder)</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-medium">Categories</h3>
+            <div className="flex gap-3 items-center">
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-gray-600">View:</label>
+                <select
+                  className="border rounded px-3 py-1 text-sm"
+                  value={viewFilter}
+                  onChange={(e) => setViewFilter(e.target.value as 'both' | 'categories' | 'subcategories')}
+                >
+                  <option value="both">All ({categories.length + subcategories.length})</option>
+                  <option value="categories">Categories Only ({categories.length})</option>
+                  <option value="subcategories">Subcategories Only ({subcategories.length})</option>
+                </select>
+              </div>
+              
+              <span className="text-sm text-gray-500">
+                ({visibleCategories.length + visibleSubcategories.length} displayed)
+              </span>
+            </div>
+          </div>
+          
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -605,35 +634,39 @@ export default function CategoriesPage() {
                   <th className="py-2">Actions</th>
                 </tr>
               </thead>
-              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleCategoryDragEnd}>
-                <SortableContext items={categories.map((c) => c.id!)} strategy={verticalListSortingStrategy}>
-                  <tbody>
-                    {categories.map((c) => (
-                      <SortableCategoryRow
-                        key={c.id}
-                        category={c}
-                        onEdit={startEditCategory}
-                        onDelete={removeCategory}
-                      />
-                    ))}
-                  </tbody>
-                </SortableContext>
-              </DndContext>
-              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSubcategoryDragEnd}>
-                <SortableContext items={subcategories.map((s) => s.id!)} strategy={verticalListSortingStrategy}>
-                  <tbody>
-                    {subcategories.map((s) => (
-                      <SortableSubcategoryRow
-                        key={s.id}
-                        subcategory={s}
-                        getCategoryName={getCategoryName}
-                        onEdit={startEditSubcategory}
-                        onDelete={removeSubcategory}
-                      />
-                    ))}
-                  </tbody>
-                </SortableContext>
-              </DndContext>
+              {viewFilter !== 'subcategories' && (
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleCategoryDragEnd}>
+                  <SortableContext items={visibleCategories.map((c) => c.id!)} strategy={verticalListSortingStrategy}>
+                    <tbody>
+                      {visibleCategories.map((c) => (
+                        <SortableCategoryRow
+                          key={c.id}
+                          category={c}
+                          onEdit={startEditCategory}
+                          onDelete={removeCategory}
+                        />
+                      ))}
+                    </tbody>
+                  </SortableContext>
+                </DndContext>
+              )}
+              {viewFilter !== 'categories' && (
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSubcategoryDragEnd}>
+                  <SortableContext items={visibleSubcategories.map((s) => s.id!)} strategy={verticalListSortingStrategy}>
+                    <tbody>
+                      {visibleSubcategories.map((s) => (
+                        <SortableSubcategoryRow
+                          key={s.id}
+                          subcategory={s}
+                          getCategoryName={getCategoryName}
+                          onEdit={startEditSubcategory}
+                          onDelete={removeSubcategory}
+                        />
+                      ))}
+                    </tbody>
+                  </SortableContext>
+                </DndContext>
+              )}
             </table>
           </div>
         </section>
