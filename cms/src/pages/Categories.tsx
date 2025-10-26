@@ -82,9 +82,11 @@ function SortableCategoryRow({ category, onEdit, onDelete }: SortableCategoryRow
     <tr ref={setNodeRef} style={style} className="border-b hover:bg-gray-50 transition-colors">
       <td className="py-3 pr-3">
         <button
-          className="cursor-grab active:cursor-grabbing p-1.5 hover:bg-indigo-50 rounded-lg transition-colors"
+          className="cursor-grab active:cursor-grabbing p-1.5 rounded-lg transition-colors"
           {...attributes}
           {...listeners}
+          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 152, 39, 0.1)'}
+          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
         >
           <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
@@ -103,14 +105,14 @@ function SortableCategoryRow({ category, onEdit, onDelete }: SortableCategoryRow
         )}
       </td>
       <td className="py-3 pr-3">
-        <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-sm">
+        <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full text-white shadow-sm" style={{ background: 'linear-gradient(135deg, #FF9827 0%, #ff8c00 100%)' }}>
           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
           </svg>
           Category
         </span>
       </td>
-      <td className="py-3 pr-3 font-semibold text-gray-900">{category.name}</td>
+      <td className="py-3 pr-3 font-semibold" style={{ color: '#141619' }}>{category.name}</td>
       <td className="py-3 pr-3 text-sm text-gray-600 font-mono">{category.slug}</td>
       <td className="py-3 pr-3 text-sm text-gray-700 font-medium">{category.order}</td>
       <td className="py-3 pr-3">
@@ -144,7 +146,16 @@ function SortableCategoryRow({ category, onEdit, onDelete }: SortableCategoryRow
       </td>
       <td className="py-3 flex gap-2">
         <button 
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 border-indigo-600 text-indigo-600 font-medium hover:bg-indigo-600 hover:text-white transition-all duration-200 shadow-sm hover:shadow-md" 
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 font-medium hover:text-white transition-all duration-200 shadow-sm hover:shadow-md" 
+          style={{ borderColor: '#FF9827', color: '#FF9827' }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#FF9827';
+            e.currentTarget.style.color = 'white';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+            e.currentTarget.style.color = '#FF9827';
+          }}
           onClick={() => onEdit(category)}
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -153,7 +164,16 @@ function SortableCategoryRow({ category, onEdit, onDelete }: SortableCategoryRow
           Edit
         </button>
         <button 
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 border-red-500 text-red-600 font-medium hover:bg-red-600 hover:text-white transition-all duration-200 shadow-sm hover:shadow-md" 
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 font-medium hover:text-white transition-all duration-200 shadow-sm hover:shadow-md" 
+          style={{ borderColor: '#EA4E45', color: '#EA4E45' }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#EA4E45';
+            e.currentTarget.style.color = 'white';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+            e.currentTarget.style.color = '#EA4E45';
+          }}
           onClick={() => onDelete(category.id!)}
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -182,15 +202,18 @@ function SortableSubcategoryRow({ subcategory, getCategoryName, onEdit, onDelete
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
+    backgroundColor: 'rgba(255, 152, 39, 0.05)',
   };
 
   return (
-    <tr ref={setNodeRef} style={style} className="border-b bg-purple-50/30 hover:bg-purple-50/60 transition-colors">
+    <tr ref={setNodeRef} style={style} className="border-b hover:bg-gray-50 transition-colors">
       <td className="py-3 pr-3">
         <button
-          className="cursor-grab active:cursor-grabbing p-1.5 hover:bg-purple-100 rounded-lg transition-colors"
+          className="cursor-grab active:cursor-grabbing p-1.5 rounded-lg transition-colors"
           {...attributes}
           {...listeners}
+          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 152, 39, 0.15)'}
+          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
         >
           <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
@@ -199,9 +222,9 @@ function SortableSubcategoryRow({ subcategory, getCategoryName, onEdit, onDelete
       </td>
       <td className="py-3 pr-3">
         {subcategory.cover_image ? (
-          <img src={subcategory.cover_image} alt={subcategory.name} className="w-12 h-15 object-cover border-2 border-purple-200 rounded-lg shadow-sm" />
+          <img src={subcategory.cover_image} alt={subcategory.name} className="w-12 h-15 object-cover border-2 rounded-lg shadow-sm" style={{ borderColor: 'rgba(255, 152, 39, 0.3)' }} />
         ) : (
-          <div className="w-12 h-15 bg-gradient-to-br from-purple-100 to-purple-200 border-2 border-purple-300 rounded-lg flex items-center justify-center text-xs text-purple-400">
+          <div className="w-12 h-15 border-2 rounded-lg flex items-center justify-center text-xs" style={{ background: 'linear-gradient(135deg, rgba(255, 152, 39, 0.1) 0%, rgba(255, 152, 39, 0.2) 100%)', borderColor: 'rgba(255, 152, 39, 0.3)', color: 'rgba(255, 152, 39, 0.7)' }}>
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
@@ -210,16 +233,16 @@ function SortableSubcategoryRow({ subcategory, getCategoryName, onEdit, onDelete
       </td>
       <td className="py-3 pr-3">
         <div className="flex flex-col gap-1">
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-sm w-fit">
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full text-white shadow-sm w-fit" style={{ background: 'linear-gradient(135deg, #FF9827 20%, #cc7820 100%)' }}>
             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
             </svg>
             Subcategory
           </span>
-          <div className="text-xs text-purple-700 font-medium">↳ {getCategoryName(subcategory.parentCategoryId)}</div>
+          <div className="text-xs font-medium" style={{ color: '#cc7820' }}>↳ {getCategoryName(subcategory.parentCategoryId)}</div>
         </div>
       </td>
-      <td className="py-3 pr-3 font-semibold text-gray-900">{subcategory.name}</td>
+      <td className="py-3 pr-3 font-semibold" style={{ color: '#141619' }}>{subcategory.name}</td>
       <td className="py-3 pr-3 text-sm text-gray-600 font-mono">{subcategory.slug}</td>
       <td className="py-3 pr-3 text-sm text-gray-700 font-medium">{subcategory.order}</td>
       <td className="py-3 pr-3">
@@ -244,7 +267,16 @@ function SortableSubcategoryRow({ subcategory, getCategoryName, onEdit, onDelete
       </td>
       <td className="py-3 flex gap-2">
         <button 
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 border-indigo-600 text-indigo-600 font-medium hover:bg-indigo-600 hover:text-white transition-all duration-200 shadow-sm hover:shadow-md" 
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 font-medium hover:text-white transition-all duration-200 shadow-sm hover:shadow-md" 
+          style={{ borderColor: '#FF9827', color: '#FF9827' }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#FF9827';
+            e.currentTarget.style.color = 'white';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+            e.currentTarget.style.color = '#FF9827';
+          }}
           onClick={() => onEdit(subcategory)}
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -253,7 +285,16 @@ function SortableSubcategoryRow({ subcategory, getCategoryName, onEdit, onDelete
           Edit
         </button>
         <button 
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 border-red-500 text-red-600 font-medium hover:bg-red-600 hover:text-white transition-all duration-200 shadow-sm hover:shadow-md" 
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 font-medium hover:text-white transition-all duration-200 shadow-sm hover:shadow-md" 
+          style={{ borderColor: '#EA4E45', color: '#EA4E45' }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#EA4E45';
+            e.currentTarget.style.color = 'white';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+            e.currentTarget.style.color = '#EA4E45';
+          }}
           onClick={() => onDelete(subcategory.id!)}
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -528,13 +569,13 @@ export default function CategoriesPage() {
         <section className="bg-white border-2 border-gray-200 rounded-xl shadow-lg p-6 flex-1 min-w-0">
           <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #FF9827 0%, #ff8c00 100%)' }}>
                 <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                 </svg>
               </div>
               <div>
-                <h3 className="font-bold text-lg text-gray-900">Categories & Subcategories</h3>
+                <h3 className="font-bold text-lg" style={{ color: '#141619' }}>Categories & Subcategories</h3>
                 <p className="text-xs text-gray-500">Manage your content categories</p>
               </div>
             </div>
@@ -542,7 +583,7 @@ export default function CategoriesPage() {
               <div className="flex items-center gap-2">
                 <label className="text-sm font-medium text-gray-600">View:</label>
                 <select
-                  className="border-2 border-gray-300 rounded-lg px-4 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all cursor-pointer bg-white"
+                  className="border-2 border-gray-300 rounded-lg px-4 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all cursor-pointer bg-white"
                   value={viewFilter}
                   onChange={(e) => setViewFilter(e.target.value as 'both' | 'categories' | 'subcategories')}
                 >
@@ -552,11 +593,11 @@ export default function CategoriesPage() {
                 </select>
               </div>
               
-              <div className="flex items-center gap-2 px-3 py-2 bg-indigo-50 rounded-lg border border-indigo-200">
-                <svg className="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg border" style={{ backgroundColor: 'rgba(255, 152, 39, 0.1)', borderColor: 'rgba(255, 152, 39, 0.3)' }}>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: '#FF9827' }}>
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                 </svg>
-                <span className="text-sm font-semibold text-indigo-900">
+                <span className="text-sm font-semibold" style={{ color: '#cc7820' }}>
                   {visibleCategories.length + visibleSubcategories.length} displayed
                 </span>
               </div>
@@ -628,7 +669,7 @@ export default function CategoriesPage() {
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Name *</label>
               <input
-                className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
                 value={form.name}
                 onChange={(e) => handleNameChange(e.target.value)}
                 required
@@ -641,7 +682,7 @@ export default function CategoriesPage() {
                 <span className="text-xs font-normal text-gray-500 ml-1">(auto-generated, editable)</span>
               </label>
               <input
-                className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all font-mono text-sm"
+                className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all font-mono text-sm"
                 value={form.slug}
                 onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))}
                 required
@@ -655,7 +696,7 @@ export default function CategoriesPage() {
               </label>
               <input
                 type="number"
-                className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
                 value={form.order}
                 onChange={(e) => setForm((f) => ({ ...f, order: Number(e.target.value) }))}
                 required
@@ -697,7 +738,7 @@ export default function CategoriesPage() {
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Description</label>
               <textarea
-                className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all resize-none"
+                className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all resize-none"
                 value={form.description || ''}
                 onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
                 rows={3}
@@ -711,7 +752,7 @@ export default function CategoriesPage() {
                   type="checkbox"
                   checked={form.visible}
                   onChange={(e) => setForm((f) => ({ ...f, visible: e.target.checked }))}
-                  className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer"
+                  className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-orange-500 cursor-pointer"
                 />
                 <label htmlFor="visible" className="text-sm font-medium text-gray-700 cursor-pointer flex-1">Visible</label>
                 {form.visible && (
@@ -728,7 +769,7 @@ export default function CategoriesPage() {
                     type="checkbox"
                     checked={form.hasSubcategories}
                     onChange={(e) => setForm((f) => ({ ...f, hasSubcategories: e.target.checked }))}
-                    className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer"
+                    className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-orange-500 cursor-pointer"
                   />
                   <label htmlFor="hasSubcategories" className="text-sm font-medium text-gray-700 cursor-pointer flex-1">Has Subcategories</label>
                   {form.hasSubcategories && (
@@ -789,7 +830,7 @@ export default function CategoriesPage() {
                 <span className="text-xs font-normal text-gray-500 ml-1">(comma separated)</span>
               </label>
               <input
-                className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
                 value={(form.tags || []).join(', ')}
                 onChange={(e) =>
                   setForm((f) => ({ ...f, tags: e.target.value.split(',').map((t) => t.trim()).filter(Boolean) }))
@@ -799,7 +840,7 @@ export default function CategoriesPage() {
               {form.tags && form.tags.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mt-2">
                   {form.tags.map((tag, idx) => (
-                    <span key={idx} className="inline-flex items-center gap-1 px-2 py-1 bg-indigo-100 text-indigo-800 text-xs font-medium rounded-md">
+                    <span key={idx} className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-md" style={{ backgroundColor: 'rgba(255, 152, 39, 0.15)', color: '#cc7820' }}>
                       <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
                       </svg>
@@ -812,7 +853,13 @@ export default function CategoriesPage() {
             <div className="flex gap-3 pt-4 border-t border-gray-200">
               <button 
                 disabled={loading} 
-                className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
+                className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg text-white font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
+                style={{ 
+                  background: loading ? '#FF9827' : 'linear-gradient(135deg, #FF9827 0%, #ff8c00 100%)',
+                  boxShadow: '0 10px 25px -5px rgba(255, 152, 39, 0.3)'
+                }}
+                onMouseEnter={(e) => !loading && (e.currentTarget.style.background = 'linear-gradient(135deg, #ff8c00 0%, #e67a00 100%)')}
+                onMouseLeave={(e) => !loading && (e.currentTarget.style.background = 'linear-gradient(135deg, #FF9827 0%, #ff8c00 100%)')}
               >
                 {loading ? (
                   <>

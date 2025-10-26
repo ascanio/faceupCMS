@@ -110,13 +110,13 @@ function SortableRow({ filter, categories, subcategories, onEdit, onDelete }: So
         </div>
       </td>
       <td className="py-3 pr-3">
-        <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-sm">
+        <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full text-white shadow-sm" style={{ background: 'linear-gradient(135deg, #FF9827 0%, #ff8c00 100%)' }}>
           {category ? category.name : filter.category}
         </span>
       </td>
       <td className="py-3 pr-3">
         {subcategory ? (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-sm">{subcategory.name}</span>
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full text-white shadow-sm" style={{ background: 'linear-gradient(135deg, #FF9827 20%, #cc7820 100%)' }}>{subcategory.name}</span>
         ) : (
           <span className="text-xs text-gray-400">—</span>
         )}
@@ -149,7 +149,16 @@ function SortableRow({ filter, categories, subcategories, onEdit, onDelete }: So
       </td>
       <td className="py-3 flex gap-2">
         <button 
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 border-indigo-600 text-indigo-600 font-medium hover:bg-indigo-600 hover:text-white transition-all duration-200 shadow-sm hover:shadow-md" 
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 font-medium hover:text-white transition-all duration-200 shadow-sm hover:shadow-md" 
+          style={{ borderColor: '#FF9827', color: '#FF9827' }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#FF9827';
+            e.currentTarget.style.color = 'white';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+            e.currentTarget.style.color = '#FF9827';
+          }}
           onClick={() => onEdit(filter)}
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -158,7 +167,16 @@ function SortableRow({ filter, categories, subcategories, onEdit, onDelete }: So
           Edit
         </button>
         <button 
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 border-red-500 text-red-600 font-medium hover:bg-red-600 hover:text-white transition-all duration-200 shadow-sm hover:shadow-md" 
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 font-medium hover:text-white transition-all duration-200 shadow-sm hover:shadow-md" 
+          style={{ borderColor: '#EA4E45', color: '#EA4E45' }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#EA4E45';
+            e.currentTarget.style.color = 'white';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+            e.currentTarget.style.color = '#EA4E45';
+          }}
           onClick={() => onDelete(filter.id!)}
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -402,13 +420,13 @@ export default function FiltersPage() {
         <section className="bg-white border-2 border-gray-200 rounded-xl shadow-lg p-6 flex-1 min-w-0">
           <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #FF9827 0%, #ff8c00 100%)' }}>
                 <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
                 </svg>
               </div>
               <div>
-                <h3 className="font-bold text-lg text-gray-900">Filters</h3>
+                <h3 className="font-bold text-lg" style={{ color: '#141619' }}>Filters</h3>
                 <p className="text-xs text-gray-500">Manage your content filters</p>
               </div>
             </div>
@@ -416,7 +434,7 @@ export default function FiltersPage() {
               <div className="flex items-center gap-2">
                 <label className="text-sm font-medium text-gray-600">Filter by:</label>
                 <select
-                  className="border-2 border-gray-300 rounded-lg px-4 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all cursor-pointer bg-white"
+                  className="border-2 border-gray-300 rounded-lg px-4 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all cursor-pointer bg-white"
                   value={filterCategory}
                   onChange={(e) => setFilterCategory(e.target.value)}
                 >
@@ -459,11 +477,11 @@ export default function FiltersPage() {
                 </button>
               )}
               
-              <div className="flex items-center gap-2 px-3 py-2 bg-indigo-50 rounded-lg border border-indigo-200">
-                <svg className="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg border" style={{ backgroundColor: 'rgba(255, 152, 39, 0.1)', borderColor: 'rgba(255, 152, 39, 0.3)' }}>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: '#FF9827' }}>
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                 </svg>
-                <span className="text-sm font-semibold text-indigo-900">
+                <span className="text-sm font-semibold" style={{ color: '#cc7820' }}>
                   {filteredFilters.length} of {filters.length}
                 </span>
               </div>
@@ -518,7 +536,7 @@ export default function FiltersPage() {
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Name *</label>
               <input
-                className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
                 value={form.name}
                 onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                 required
@@ -528,7 +546,7 @@ export default function FiltersPage() {
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Category *</label>
               <select
-                className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all bg-white cursor-pointer"
+                className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all bg-white cursor-pointer"
                 value={form.category}
                 onChange={(e) => setForm((f) => ({ ...f, category: e.target.value, subcategory: '' }))}
                 required
@@ -568,7 +586,7 @@ export default function FiltersPage() {
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Popularity</label>
                 <input
                   type="number"
-                  className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                  className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
                   value={form.popularity}
                   onChange={(e) => setForm((f) => ({ ...f, popularity: Number(e.target.value) }))}
                   required
@@ -582,7 +600,7 @@ export default function FiltersPage() {
                 </label>
                 <input
                   type="number"
-                  className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                  className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
                   value={form.order}
                   onChange={(e) => setForm((f) => ({ ...f, order: Number(e.target.value) }))}
                   required
@@ -611,7 +629,7 @@ export default function FiltersPage() {
                   type="checkbox"
                   checked={form.visible}
                   onChange={(e) => setForm((f) => ({ ...f, visible: e.target.checked }))}
-                  className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer"
+                  className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-orange-500 cursor-pointer"
                 />
                 <label htmlFor="visible" className="text-sm font-medium text-gray-700 cursor-pointer flex-1">Visible</label>
                 {form.visible && (
@@ -627,7 +645,7 @@ export default function FiltersPage() {
                   type="checkbox"
                   checked={form.supports_reference_images || false}
                   onChange={(e) => setForm((f) => ({ ...f, supports_reference_images: e.target.checked }))}
-                  className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer"
+                  className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-orange-500 cursor-pointer"
                 />
                 <label htmlFor="supports_reference_images" className="text-sm font-medium text-gray-700 cursor-pointer flex-1">Supports Reference Images</label>
               </div>
@@ -636,7 +654,7 @@ export default function FiltersPage() {
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Max Reference Images</label>
                 <select
-                  className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all bg-white cursor-pointer"
+                  className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all bg-white cursor-pointer"
                   value={form.max_reference_images || 1}
                   onChange={(e) => setForm((f) => ({ ...f, max_reference_images: Number(e.target.value) }))}
                 >
@@ -649,7 +667,7 @@ export default function FiltersPage() {
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Prompt *</label>
               <textarea
-                className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all resize-none"
+                className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all resize-none"
                 value={form.prompt}
                 onChange={(e) => setForm((f) => ({ ...f, prompt: e.target.value }))}
                 required
@@ -663,7 +681,7 @@ export default function FiltersPage() {
                 <span className="text-xs font-normal text-gray-500 ml-1">(comma separated)</span>
               </label>
               <input
-                className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
                 value={(form.tags || []).join(', ')}
                 onChange={(e) =>
                   setForm((f) => ({ ...f, tags: e.target.value.split(',').map((t) => t.trim()).filter(Boolean) }))
@@ -673,7 +691,7 @@ export default function FiltersPage() {
               {form.tags && form.tags.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mt-2">
                   {form.tags.map((tag, idx) => (
-                    <span key={idx} className="inline-flex items-center gap-1 px-2 py-1 bg-indigo-100 text-indigo-800 text-xs font-medium rounded-md">
+                    <span key={idx} className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-md" style={{ backgroundColor: 'rgba(255, 152, 39, 0.15)', color: '#cc7820' }}>
                       <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
                       </svg>
@@ -719,7 +737,13 @@ export default function FiltersPage() {
             <div className="flex gap-3 pt-4 border-t border-gray-200">
               <button 
                 disabled={loading} 
-                className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
+                className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg text-white font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
+                style={{ 
+                  background: loading ? '#FF9827' : 'linear-gradient(135deg, #FF9827 0%, #ff8c00 100%)',
+                  boxShadow: '0 10px 25px -5px rgba(255, 152, 39, 0.3)'
+                }}
+                onMouseEnter={(e) => !loading && (e.currentTarget.style.background = 'linear-gradient(135deg, #ff8c00 0%, #e67a00 100%)')}
+                onMouseLeave={(e) => !loading && (e.currentTarget.style.background = 'linear-gradient(135deg, #FF9827 0%, #ff8c00 100%)')}
               >
                 {loading ? (
                   <>
