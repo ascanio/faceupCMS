@@ -47,6 +47,7 @@ function emptyFilter(): Omit<Filter, 'id'> {
     visible: true,
     supports_reference_images: false,
     max_reference_images: 1,
+    isVideo: false,
   };
 }
 
@@ -89,7 +90,7 @@ function SortableRow({ filter, categories, subcategories, onEdit, onDelete }: So
       </td>
       <td className="py-3 pr-3">
         {filter.thumb_128 ? (
-          <img src={filter.thumb_128} alt={filter.name} className="w-10 h-10 object-cover border-2 border-gray-200 rounded-lg shadow-sm" />
+          <img src={filter.thumb_128} alt={filter.name} className="w-12 h-15 object-cover border-2 border-gray-200 rounded-lg shadow-sm" />
         ) : (
           <div className="w-10 h-10 bg-gradient-to-br from-gray-100 to-gray-200 border-2 border-gray-300 rounded-lg flex items-center justify-center text-xs text-gray-400">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -323,13 +324,17 @@ export default function FiltersPage() {
     setLoading(true);
     try {
       const thumbUrl = await uploadThumbIfNeeded(form.thumb_128);
-      const payload = {
+      const payload: any = {
         ...form,
         thumb_128: thumbUrl,
         category: form.category,
-        subcategory: form.subcategory || undefined, // Only include if set
         updatedAt: serverTimestamp(),
-      } as any;
+      };
+
+      // Only include subcategory if it has a value
+      if (form.subcategory) {
+        payload.subcategory = form.subcategory;
+      }
 
       if (editingId) {
         await updateDoc(doc(db, 'filters_feed', editingId), payload);
@@ -525,16 +530,61 @@ export default function FiltersPage() {
           </div>
         </section>
 
-        <section className="bg-white border-2 border-gray-200 rounded-xl shadow-lg p-6 w-96 flex-shrink-0 h-fit sticky top-24">
-          <div className="flex items-center gap-3 mb-5 pb-4 border-b border-gray-200">
-            <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
+        <section className="bg-white border-2 border-gray-200 rounded-xl shadow-lg p-6 w-140 flex-shrink-0 h-fit sticky top-24">
+          <div className="flex items-center justify-between mb-5 pb-4 border-b border-gray-200">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+              </div>
+              <h3 className="font-bold text-lg text-gray-900">{title}</h3>
             </div>
-            <h3 className="font-bold text-lg text-gray-900">{title}</h3>
+            <div className="flex gap-2">
+              <button 
+                disabled={loading}
+                type="submit"
+                form="filter-form"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md"
+                style={{ 
+                  background: loading ? '#FF9827' : 'linear-gradient(135deg, #FF9827 0%, #ff8c00 100%)',
+                }}
+                onMouseEnter={(e) => !loading && (e.currentTarget.style.background = 'linear-gradient(135deg, #ff8c00 0%, #e67a00 100%)')}
+                onMouseLeave={(e) => !loading && (e.currentTarget.style.background = 'linear-gradient(135deg, #FF9827 0%, #ff8c00 100%)')}
+              >
+                {loading ? (
+                  <>
+                    <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    {editingId ? 'Save' : 'Create'}
+                  </>
+                )}
+              </button>
+              {editingId && (
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 border-gray-300 text-gray-700 text-sm font-semibold hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition-all"
+                  onClick={() => {
+                    setEditingId(null);
+                    setForm(emptyFilter());
+                    setFile(null);
+                  }}
+                >
+                  Cancel
+                </button>
+              )}
+            </div>
           </div>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form id="filter-form" onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Name *</label>
               <input
@@ -545,44 +595,46 @@ export default function FiltersPage() {
                 placeholder="Enter filter name"
               />
             </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Category *</label>
-              <select
-                className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all bg-white cursor-pointer"
-                value={form.category}
-                onChange={(e) => setForm((f) => ({ ...f, category: e.target.value, subcategory: '' }))}
-                required
-              >
-                <option value="" disabled>
-                  Select category
-                </option>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} ({c.slug})
-                  </option>
-                ))}
-              </select>
-            </div>
-            {form.category && availableSubcategories.length > 0 && (
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Subcategory 
-                  <span className="text-xs font-normal text-gray-500 ml-1">(optional)</span>
-                </label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Category *</label>
                 <select
-                  className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white cursor-pointer"
-                  value={form.subcategory || ''}
-                  onChange={(e) => setForm((f) => ({ ...f, subcategory: e.target.value }))}
+                  className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all bg-white cursor-pointer"
+                  value={form.category}
+                  onChange={(e) => setForm((f) => ({ ...f, category: e.target.value, subcategory: '' }))}
+                  required
                 >
-                  <option value="">None</option>
-                  {availableSubcategories.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name} ({s.slug})
+                  <option value="" disabled>
+                    Select category
+                  </option>
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} ({c.slug})
                     </option>
                   ))}
                 </select>
               </div>
-            )}
+              {form.category && availableSubcategories.length > 0 && (
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Subcategory 
+                    <span className="text-xs font-normal text-gray-500 ml-1">(optional)</span>
+                  </label>
+                  <select
+                    className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white cursor-pointer"
+                    value={form.subcategory || ''}
+                    onChange={(e) => setForm((f) => ({ ...f, subcategory: e.target.value }))}
+                  >
+                    <option value="">None</option>
+                    {availableSubcategories.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name} ({s.slug})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Popularity</label>
@@ -651,6 +703,21 @@ export default function FiltersPage() {
                 />
                 <label htmlFor="supports_reference_images" className="text-sm font-medium text-gray-700 cursor-pointer flex-1">Supports Reference Images</label>
               </div>
+              <div className="flex items-center gap-3 p-3 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors">
+                <input
+                  id="isVideo"
+                  type="checkbox"
+                  checked={form.isVideo || false}
+                  onChange={(e) => setForm((f) => ({ ...f, isVideo: e.target.checked }))}
+                  className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500 cursor-pointer"
+                />
+                <label htmlFor="isVideo" className="text-sm font-medium text-gray-700 cursor-pointer flex-1">Video Filter</label>
+                {form.isVideo && (
+                  <svg className="w-5 h-5 text-purple-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
+                  </svg>
+                )}
+              </div>
             </div>
             {form.supports_reference_images && (
               <div>
@@ -669,7 +736,7 @@ export default function FiltersPage() {
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Prompt *</label>
               <textarea
-                className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all resize-none"
+                className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all resize-y"
                 value={form.prompt}
                 onChange={(e) => setForm((f) => ({ ...f, prompt: e.target.value }))}
                 required
@@ -716,7 +783,7 @@ export default function FiltersPage() {
               />
               {form.thumb_128 && (
                 <div className="mt-3 p-3 bg-gray-50 rounded-lg border-2 border-gray-200">
-                  <img src={form.thumb_128} alt="Thumb preview" className="w-20 h-20 object-cover border-2 border-gray-300 rounded-lg shadow-sm mx-auto" />
+                  <img src={form.thumb_128} alt="Thumb preview" className="w-26 h-32 object-cover border-2 border-gray-300 rounded-lg shadow-sm mx-auto" />
                   {!file && (form.category || form.subcategory) && (
                     <p className="text-xs text-gray-600 mt-2 text-center flex items-center justify-center gap-1">
                       <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

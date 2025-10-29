@@ -658,7 +658,7 @@ export default function CategoriesPage() {
           </div>
         </section>
 
-        <section className="bg-white border-2 border-gray-200 rounded-xl shadow-lg p-6 w-96 flex-shrink-0 h-fit sticky top-24">
+        <section className="bg-white border-2 border-gray-200 rounded-xl shadow-lg p-6 w-140 flex-shrink-0 h-fit sticky top-24">
           <div className="flex items-center gap-3 mb-5 pb-4 border-b border-gray-200">
             <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
               <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">

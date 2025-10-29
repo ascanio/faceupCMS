@@ -14,6 +14,7 @@ export interface Filter {
   visible: boolean;
   supports_reference_images?: boolean; // whether this filter supports reference images
   max_reference_images?: number; // maximum number of reference images (1, 2, or 3)
+  isVideo?: boolean; // whether this filter is for video generation
   updatedAt?: Timestamp; // set by server
 }
 
