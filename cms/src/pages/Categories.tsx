@@ -751,41 +751,41 @@ export default function CategoriesPage() {
                 </tr>
               </thead>
               <tbody>
-                {viewFilter !== 'subcategories' && visibleCategories.map((category) => {
-                  const categorySubcategories = viewFilter !== 'categories' ? getSubcategoriesForCategory(category.id!) : [];
-                  
-                  return (
-                    <React.Fragment key={category.id}>
-                      {/* Category Row */}
-                      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleCategoryDragEnd}>
-                        <SortableContext items={[category.id!]} strategy={verticalListSortingStrategy}>
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleCategoryDragEnd}>
+                  <SortableContext items={visibleCategories.map(c => c.id!)} strategy={verticalListSortingStrategy}>
+                    {viewFilter !== 'subcategories' && visibleCategories.map((category) => {
+                      const categorySubcategories = viewFilter !== 'categories' ? getSubcategoriesForCategory(category.id!) : [];
+                      
+                      return (
+                        <React.Fragment key={category.id}>
+                          {/* Category Row */}
                           <SortableCategoryRow
                             category={category}
                             onEdit={startEditCategory}
                             onDelete={removeCategory}
                           />
-                        </SortableContext>
-                      </DndContext>
-                      
-                      {/* Subcategories for this category */}
-                      {categorySubcategories.length > 0 && (
-                        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSubcategoryDragEnd}>
-                          <SortableContext items={categorySubcategories.map((s) => s.id!)} strategy={verticalListSortingStrategy}>
-                            {categorySubcategories.map((subcategory) => (
-                              <SortableSubcategoryRow
-                                key={subcategory.id}
-                                subcategory={subcategory}
-                                getCategoryName={getCategoryName}
-                                onEdit={startEditSubcategory}
-                                onDelete={removeSubcategory}
-                              />
-                            ))}
-                          </SortableContext>
-                        </DndContext>
-                      )}
-                    </React.Fragment>
-                  );
-                })}
+                          
+                          {/* Subcategories for this category */}
+                          {categorySubcategories.length > 0 && (
+                            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSubcategoryDragEnd}>
+                              <SortableContext items={categorySubcategories.map((s) => s.id!)} strategy={verticalListSortingStrategy}>
+                                {categorySubcategories.map((subcategory) => (
+                                  <SortableSubcategoryRow
+                                    key={subcategory.id}
+                                    subcategory={subcategory}
+                                    getCategoryName={getCategoryName}
+                                    onEdit={startEditSubcategory}
+                                    onDelete={removeSubcategory}
+                                  />
+                                ))}
+                              </SortableContext>
+                            </DndContext>
+                          )}
+                        </React.Fragment>
+                      );
+                    })}
+                  </SortableContext>
+                </DndContext>
                 
                 {/* Orphaned subcategories (when showing all subcategories or when they have no valid parent) */}
                 {viewFilter === 'subcategories' && orphanedSubcategories.length > 0 && (
