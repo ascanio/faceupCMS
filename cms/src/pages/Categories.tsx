@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   collection,
   addDoc,
@@ -32,6 +32,46 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+
+interface Toast {
+  id: number;
+  message: string;
+  type: 'success' | 'error' | 'warning';
+}
+
+function ToastContainer({ toasts }: { toasts: Toast[] }) {
+  return (
+    <div className="fixed top-4 right-4 z-50 space-y-2">
+      {toasts.map((toast) => (
+        <div
+          key={toast.id}
+          className="flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg border-2 animate-slideIn min-w-80"
+          style={{
+            backgroundColor: toast.type === 'success' ? '#10b981' : toast.type === 'error' ? '#ef4444' : '#f59e0b',
+            borderColor: toast.type === 'success' ? '#059669' : toast.type === 'error' ? '#dc2626' : '#d97706',
+          }}
+        >
+          {toast.type === 'success' && (
+            <svg className="w-5 h-5 text-white flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+            </svg>
+          )}
+          {toast.type === 'error' && (
+            <svg className="w-5 h-5 text-white flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+            </svg>
+          )}
+          {toast.type === 'warning' && (
+            <svg className="w-5 h-5 text-white flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+            </svg>
+          )}
+          <span className="text-white font-medium text-sm">{toast.message}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 interface FormState {
   name: string;
@@ -81,7 +121,7 @@ function SortableCategoryRow({ category, onEdit, onDelete }: SortableCategoryRow
 
   return (
     <tr ref={setNodeRef} style={style} className="hover:bg-gray-50 transition-colors">
-      <td className="py-3 pr-3">
+      <td className="py-3 pr-0 pl-4">
         <button
           className="cursor-grab active:cursor-grabbing p-1.5 rounded-lg transition-colors"
           {...attributes}
@@ -209,7 +249,7 @@ function SortableSubcategoryRow({ subcategory, getCategoryName, onEdit, onDelete
 
   return (
     <tr ref={setNodeRef} style={style} className="hover:bg-gray-50 transition-colors">
-      <td className="py-3 pr-3">
+      <td className="py-3 pr-0 pl-8">
         <button
           className="cursor-grab active:cursor-grabbing p-1.5 rounded-lg transition-colors"
           {...attributes}
@@ -222,16 +262,19 @@ function SortableSubcategoryRow({ subcategory, getCategoryName, onEdit, onDelete
           </svg>
         </button>
       </td>
-      <td className="py-3 pr-3">
-        {subcategory.cover_image ? (
-          <img src={subcategory.cover_image} alt={subcategory.name} className="w-12 h-15 object-cover border-2 rounded-lg shadow-sm" style={{ borderColor: 'rgba(255, 152, 39, 0.3)' }} />
-        ) : (
-          <div className="w-12 h-15 border-2 rounded-lg flex items-center justify-center text-xs" style={{ background: 'linear-gradient(135deg, rgba(255, 152, 39, 0.1) 0%, rgba(255, 152, 39, 0.2) 100%)', borderColor: 'rgba(255, 152, 39, 0.3)', color: 'rgba(255, 152, 39, 0.7)' }}>
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-          </div>
-        )}
+      <td className="py-3 pr-3 relative">
+        <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-gradient-to-b from-orange-300 to-orange-200 opacity-40"></div>
+        <div className="ml-8">
+          {subcategory.cover_image ? (
+            <img src={subcategory.cover_image} alt={subcategory.name} className="w-12 h-15 object-cover border-2 rounded-lg shadow-sm" style={{ borderColor: 'rgba(255, 152, 39, 0.3)' }} />
+          ) : (
+            <div className="w-12 h-15 border-2 rounded-lg flex items-center justify-center text-xs" style={{ background: 'linear-gradient(135deg, rgba(255, 152, 39, 0.1) 0%, rgba(255, 152, 39, 0.2) 100%)', borderColor: 'rgba(255, 152, 39, 0.3)', color: 'rgba(255, 152, 39, 0.7)' }}>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+          )}
+        </div>
       </td>
       <td className="py-3 pr-3">
         <div className="flex flex-col gap-1">
@@ -319,6 +362,20 @@ export default function CategoriesPage() {
   
   // View filter: 'both', 'categories', or 'subcategories'
   const [viewFilter, setViewFilter] = useState<'both' | 'categories' | 'subcategories'>('both');
+  
+  // Selected category filter for viewing specific category's subcategories
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('');
+  
+  // Toast notifications
+  const [toasts, setToasts] = useState<Toast[]>([]);
+  
+  const showToast = (message: string, type: 'success' | 'error' | 'warning' = 'success') => {
+    const id = Date.now();
+    setToasts((prev) => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((toast) => toast.id !== id));
+    }, 3000);
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -353,14 +410,40 @@ export default function CategoriesPage() {
     return form.isSubcategory ? 'Create Subcategory' : 'Create Category';
   }, [editingId, form.isSubcategory]);
 
-  // Filtered lists based on view selection
+  // Filtered lists based on view selection and category filter
   const visibleCategories = useMemo(() => {
-    return viewFilter === 'subcategories' ? [] : categories;
-  }, [viewFilter, categories]);
+    if (viewFilter === 'subcategories') return [];
+    
+    // If a specific category is selected, only show that category
+    if (selectedCategoryFilter) {
+      return categories.filter(cat => cat.id === selectedCategoryFilter);
+    }
+    
+    return categories;
+  }, [viewFilter, categories, selectedCategoryFilter]);
 
-  const visibleSubcategories = useMemo(() => {
-    return viewFilter === 'categories' ? [] : subcategories;
-  }, [viewFilter, subcategories]);
+  // Get subcategories for a specific category
+  const getSubcategoriesForCategory = (categoryId: string) => {
+    return subcategories.filter(sub => sub.parentCategoryId === categoryId);
+  };
+
+  // Get orphaned subcategories (those without a parent or parent doesn't exist)
+  const orphanedSubcategories = useMemo(() => {
+    if (viewFilter === 'categories') return [];
+    
+    const orphaned = subcategories.filter(sub => {
+      // Check if parent exists
+      const parentExists = categories.some(cat => cat.id === sub.parentCategoryId);
+      return !parentExists;
+    });
+    
+    // Apply category filter if set
+    if (selectedCategoryFilter) {
+      return orphaned.filter(sub => sub.parentCategoryId === selectedCategoryFilter);
+    }
+    
+    return orphaned;
+  }, [subcategories, categories, viewFilter, selectedCategoryFilter]);
 
   // Auto-generate slug from name
   const handleNameChange = (name: string) => {
@@ -435,7 +518,7 @@ export default function CategoriesPage() {
     
     // Validate parent category if subcategory
     if (form.isSubcategory && !form.parentCategoryId) {
-      alert('Please select a parent category for this subcategory');
+      showToast('Please select a parent category for this subcategory', 'warning');
       return;
     }
     
@@ -566,6 +649,7 @@ export default function CategoriesPage() {
 
   return (
     <div className="w-full">
+      <ToastContainer toasts={toasts} />
 
       <div className="flex gap-6">
         <section className="bg-white border-2 border-gray-200 rounded-xl shadow-lg p-6 flex-1 min-w-0">
@@ -587,7 +671,11 @@ export default function CategoriesPage() {
                 <select
                   className="border-2 border-gray-300 rounded-lg px-4 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all cursor-pointer bg-white"
                   value={viewFilter}
-                  onChange={(e) => setViewFilter(e.target.value as 'both' | 'categories' | 'subcategories')}
+                  onChange={(e) => {
+                    setViewFilter(e.target.value as 'both' | 'categories' | 'subcategories');
+                    // Clear category filter when changing view
+                    setSelectedCategoryFilter('');
+                  }}
                 >
                   <option value="both">All ({categories.length + subcategories.length})</option>
                   <option value="categories">Categories Only ({categories.length})</option>
@@ -595,12 +683,53 @@ export default function CategoriesPage() {
                 </select>
               </div>
               
+              {/* Category filter for subcategories */}
+              {viewFilter !== 'categories' && categories.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium text-gray-600">Category:</label>
+                  <select
+                    className="border-2 rounded-lg px-4 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all cursor-pointer bg-white"
+                    style={{ borderColor: selectedCategoryFilter ? '#9333ea' : '#d1d5db' }}
+                    value={selectedCategoryFilter}
+                    onChange={(e) => setSelectedCategoryFilter(e.target.value)}
+                  >
+                    <option value="">All Categories</option>
+                    {categories.map((cat) => {
+                      const subcatCount = subcategories.filter(sub => sub.parentCategoryId === cat.id).length;
+                      return (
+                        <option key={cat.id} value={cat.id}>
+                          {cat.name} ({subcatCount})
+                        </option>
+                      );
+                    })}
+                  </select>
+                  {selectedCategoryFilter && (
+                    <button
+                      onClick={() => setSelectedCategoryFilter('')}
+                      className="p-1.5 rounded-lg transition-colors hover:bg-gray-100"
+                      title="Clear filter"
+                    >
+                      <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              )}
+              
               <div className="flex items-center gap-2 px-3 py-2 rounded-lg border" style={{ backgroundColor: 'rgba(255, 152, 39, 0.1)', borderColor: 'rgba(255, 152, 39, 0.3)' }}>
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: '#FF9827' }}>
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                 </svg>
                 <span className="text-sm font-semibold" style={{ color: '#cc7820' }}>
-                  {visibleCategories.length + visibleSubcategories.length} displayed
+                  {(() => {
+                    let count = visibleCategories.length;
+                    visibleCategories.forEach(cat => {
+                      count += getSubcategoriesForCategory(cat.id!).length;
+                    });
+                    count += orphanedSubcategories.length;
+                    return count;
+                  })()} displayed
                 </span>
               </div>
             </div>
@@ -621,39 +750,60 @@ export default function CategoriesPage() {
                   <th className="py-3 pr-3 font-bold text-gray-700 text-xs uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
-              {viewFilter !== 'subcategories' && (
-                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleCategoryDragEnd}>
-                  <SortableContext items={visibleCategories.map((c) => c.id!)} strategy={verticalListSortingStrategy}>
-                    <tbody>
-                      {visibleCategories.map((c) => (
-                        <SortableCategoryRow
-                          key={c.id}
-                          category={c}
-                          onEdit={startEditCategory}
-                          onDelete={removeCategory}
-                        />
-                      ))}
-                    </tbody>
-                  </SortableContext>
-                </DndContext>
-              )}
-              {viewFilter !== 'categories' && (
-                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSubcategoryDragEnd}>
-                  <SortableContext items={visibleSubcategories.map((s) => s.id!)} strategy={verticalListSortingStrategy}>
-                    <tbody>
-                      {visibleSubcategories.map((s) => (
+              <tbody>
+                {viewFilter !== 'subcategories' && visibleCategories.map((category) => {
+                  const categorySubcategories = viewFilter !== 'categories' ? getSubcategoriesForCategory(category.id!) : [];
+                  
+                  return (
+                    <React.Fragment key={category.id}>
+                      {/* Category Row */}
+                      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleCategoryDragEnd}>
+                        <SortableContext items={[category.id!]} strategy={verticalListSortingStrategy}>
+                          <SortableCategoryRow
+                            category={category}
+                            onEdit={startEditCategory}
+                            onDelete={removeCategory}
+                          />
+                        </SortableContext>
+                      </DndContext>
+                      
+                      {/* Subcategories for this category */}
+                      {categorySubcategories.length > 0 && (
+                        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSubcategoryDragEnd}>
+                          <SortableContext items={categorySubcategories.map((s) => s.id!)} strategy={verticalListSortingStrategy}>
+                            {categorySubcategories.map((subcategory) => (
+                              <SortableSubcategoryRow
+                                key={subcategory.id}
+                                subcategory={subcategory}
+                                getCategoryName={getCategoryName}
+                                onEdit={startEditSubcategory}
+                                onDelete={removeSubcategory}
+                              />
+                            ))}
+                          </SortableContext>
+                        </DndContext>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+                
+                {/* Orphaned subcategories (when showing all subcategories or when they have no valid parent) */}
+                {viewFilter === 'subcategories' && orphanedSubcategories.length > 0 && (
+                  <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSubcategoryDragEnd}>
+                    <SortableContext items={orphanedSubcategories.map((s) => s.id!)} strategy={verticalListSortingStrategy}>
+                      {orphanedSubcategories.map((subcategory) => (
                         <SortableSubcategoryRow
-                          key={s.id}
-                          subcategory={s}
+                          key={subcategory.id}
+                          subcategory={subcategory}
                           getCategoryName={getCategoryName}
                           onEdit={startEditSubcategory}
                           onDelete={removeSubcategory}
                         />
                       ))}
-                    </tbody>
-                  </SortableContext>
-                </DndContext>
-              )}
+                    </SortableContext>
+                  </DndContext>
+                )}
+              </tbody>
             </table>
           </div>
         </section>
