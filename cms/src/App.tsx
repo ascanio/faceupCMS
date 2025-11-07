@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, NavLink, Navigate } from 'react-router-do
 import './App.css'
 import CategoriesPage from './pages/Categories'
 import FiltersPage from './pages/Filters'
+import FiltersListPage from './pages/FiltersList'
 import OnboardingSliderPage from './pages/OnboardingSlider'
 
 function App() {
@@ -55,6 +56,22 @@ function App() {
                 Categories
               </NavLink>
               <NavLink
+                to="/filters-list"
+                className={({ isActive }) =>
+                  `px-5 py-2.5 rounded-lg font-medium transition-all duration-200 flex items-center gap-2 ${
+                    isActive 
+                      ? 'text-white shadow-lg' 
+                      : 'hover:bg-gray-100'
+                  }`
+                }
+                style={({ isActive }) => isActive ? { backgroundColor: '#FF9827', boxShadow: '0 10px 25px -5px rgba(255, 152, 39, 0.3)' } : { color: '#141619' }}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                Filters List
+              </NavLink>
+              <NavLink
                 to="/onboarding"
                 className={({ isActive }) =>
                   `px-5 py-2.5 rounded-lg font-medium transition-all duration-200 flex items-center gap-2 ${
@@ -77,6 +94,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Navigate to="/filters" replace />} />
             <Route path="/filters" element={<FiltersPage />} />
+            <Route path="/filters-list" element={<FiltersListPage />} />
             <Route path="/categories" element={<CategoriesPage />} />
             <Route path="/onboarding" element={<OnboardingSliderPage />} />
           </Routes>
