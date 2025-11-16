@@ -55,3 +55,13 @@ export interface OnboardingSlider {
 	updatedAt?: Timestamp; // set by server
 }
 
+export interface User {
+	id?: string; // Firestore document id
+	consumableCredits?: number;
+	freeCredits?: number;
+	subscriptionCredits?: number;
+	subscriptionTier?: string; // e.g., "free", "pro", "premium"
+	createdAt?: Timestamp;
+	updatedAt?: Timestamp;
+}
+

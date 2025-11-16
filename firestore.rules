@@ -1,31 +1,139 @@
 rules_version = '2';
+
 service cloud.firestore {
+
   match /databases/{database}/documents {
-    // Categories collection - allow all reads and writes for development
+
+    
+
+    // ===========================================
+
+    // USER DOCUMENTS - Read/Write own data only
+
+    // ===========================================
+
+    match /users/{userId} {
+
+      // CMS can read all users (no auth), or users can read their own document
+
+      allow read: if request.auth == null || (request.auth != null && request.auth.uid == userId);
+
+      
+
+      // Users can create their own document with validated credit fields
+
+      allow create: if request.auth != null 
+
+                    && request.auth.uid == userId
+
+                    && request.resource.data.subscriptionCredits is int
+
+                    && request.resource.data.subscriptionCredits >= 0
+
+                    && request.resource.data.consumableCredits is int
+
+                    && request.resource.data.consumableCredits >= 0;
+
+      
+
+      // Users can update their own document with validated credit fields
+
+      allow update: if request.auth != null 
+
+                    && request.auth.uid == userId
+
+                    && (!("subscriptionCredits" in request.resource.data) || (request.resource.data.subscriptionCredits is int && request.resource.data.subscriptionCredits >= 0))
+
+                    && (!("consumableCredits" in request.resource.data) || (request.resource.data.consumableCredits is int && request.resource.data.consumableCredits >= 0));
+
+      
+
+      // No delete allowed from client
+
+      allow delete: if false;
+
+    }
+
+
+
+    // ===========================================
+
+    // CATEGORIES - Public read/write for CMS
+
+    // ===========================================
+
     match /categories/{categoryId} {
-      allow read: if true;
-      allow write: if true;
+
+      // Anyone can read and write categories (CMS has no auth)
+
+      allow read, write: if true;
+
     }
+
     
-    // Subcategories collection - allow all reads and writes for development
-    match /subcategories/{subcategoryId} {
-      allow read: if true;
-      allow write: if true;
-    }
-    
-    // Filters feed collection - allow all reads and writes for development
+
+    // ===========================================
+
+    // FILTERS - Public read/write for CMS
+
+    // ===========================================
+
     match /filters_feed/{filterId} {
-      allow read: if true;
-      allow write: if true;
+
+      // Anyone can read and write filters (CMS has no auth)
+
+      allow read, write: if true;
+
     }
+
     
-    // Onboarding sliders collection - allow all reads and writes for development
-    match /onboarding_sliders/{sliderId} {
-      allow read: if true;
-      allow write: if true;
+
+    // ===========================================
+
+    // SUBCATEGORIES - Public read/write for CMS
+
+    // ===========================================
+
+    match /subcategories/{subcategoryId} {
+
+      // Anyone can read and write subcategories (CMS has no auth)
+
+      allow read, write: if true;
+
     }
+
+
+
+    // ===========================================
+
+    // ONBOARDING SLIDERS - Public read/write for CMS
+
+    // ===========================================
+
+    match /onboarding_sliders/{sliderId} {
+
+      // Anyone can read and write onboarding sliders (CMS has no auth)
+
+      allow read, write: if true;
+
+    }
+
+    
+
+    // ===========================================
+
+    // DEFAULT DENY - All other collections
+
+    // ===========================================
+
+    // Any collection not explicitly defined above is denied
+
+    match /{document=**} {
+
+      allow read, write: if false;
+
+    }
+
   }
+
 }
-
-
-

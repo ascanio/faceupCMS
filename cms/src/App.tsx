@@ -4,6 +4,7 @@ import CategoriesPage from './pages/Categories'
 import FiltersPage from './pages/Filters'
 import FiltersListPage from './pages/FiltersList'
 import OnboardingSliderPage from './pages/OnboardingSlider'
+import UsersPage from './pages/Users'
 
 function App() {
   return (
@@ -87,6 +88,22 @@ function App() {
                 </svg>
                 Onboarding Slider
               </NavLink>
+              <NavLink
+                to="/users"
+                className={({ isActive }) =>
+                  `px-5 py-2.5 rounded-lg font-medium transition-all duration-200 flex items-center gap-2 ${
+                    isActive 
+                      ? 'text-white shadow-lg' 
+                      : 'hover:bg-gray-100'
+                  }`
+                }
+                style={({ isActive }) => isActive ? { backgroundColor: '#FF9827', boxShadow: '0 10px 25px -5px rgba(255, 152, 39, 0.3)' } : { color: '#141619' }}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+                Users
+              </NavLink>
             </nav>
           </div>
         </header>
@@ -97,6 +114,7 @@ function App() {
             <Route path="/filters-list" element={<FiltersListPage />} />
             <Route path="/categories" element={<CategoriesPage />} />
             <Route path="/onboarding" element={<OnboardingSliderPage />} />
+            <Route path="/users" element={<UsersPage />} />
           </Routes>
         </main>
       </div>
