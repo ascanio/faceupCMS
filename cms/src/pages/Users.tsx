@@ -11,6 +11,8 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(true);
   const [sortColumn, setSortColumn] = useState<SortColumn>('createdAt');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [dateFilterStart, setDateFilterStart] = useState<string>('');
+  const [dateFilterEnd, setDateFilterEnd] = useState<string>('');
 
   useEffect(() => {
     // Query without orderBy first to avoid issues if createdAt field doesn't exist on all documents
@@ -30,6 +32,34 @@ export default function UsersPage() {
     return () => unsubscribe();
   }, []);
 
+  // Filter users by date range
+  const filteredUsers = useMemo(() => {
+    if (!dateFilterStart && !dateFilterEnd) {
+      return users;
+    }
+
+    return users.filter(user => {
+      const createdAt = user.createdAt?.toMillis?.() || user.createdAt?.seconds * 1000 || 0;
+      const userDate = new Date(createdAt);
+      
+      if (dateFilterStart && dateFilterEnd) {
+        const startDate = new Date(dateFilterStart);
+        const endDate = new Date(dateFilterEnd);
+        endDate.setHours(23, 59, 59, 999); // Include the entire end date
+        return userDate >= startDate && userDate <= endDate;
+      } else if (dateFilterStart) {
+        const startDate = new Date(dateFilterStart);
+        return userDate >= startDate;
+      } else if (dateFilterEnd) {
+        const endDate = new Date(dateFilterEnd);
+        endDate.setHours(23, 59, 59, 999);
+        return userDate <= endDate;
+      }
+      
+      return true;
+    });
+  }, [users, dateFilterStart, dateFilterEnd]);
+
   const sortedUsers = useMemo(() => {
     // Define custom tier order: ULTRA (0) > PRO (1) > Basic (2) > FREE (3)
     const tierOrder: Record<string, number> = {
@@ -44,7 +74,7 @@ export default function UsersPage() {
       return tierOrder[normalizedTier] ?? 3; // Default to FREE if unknown tier
     };
 
-    const sorted = [...users];
+    const sorted = [...filteredUsers];
     sorted.sort((a, b) => {
       let aValue: any;
       let bValue: any;
@@ -93,7 +123,7 @@ export default function UsersPage() {
     });
 
     return sorted;
-  }, [users, sortColumn, sortDirection]);
+  }, [filteredUsers, sortColumn, sortDirection]);
 
   const handleSort = (column: SortColumn) => {
     if (sortColumn === column) {
@@ -180,12 +210,12 @@ export default function UsersPage() {
     );
   };
 
-  // Calculate metrics
+  // Calculate metrics based on filtered users
   const metrics = useMemo(() => {
-    const ultraUsers = users.filter(u => u.subscriptionTier?.toLowerCase() === 'ultra').length;
-    const proUsers = users.filter(u => u.subscriptionTier?.toLowerCase() === 'pro').length;
-    const basicUsers = users.filter(u => u.subscriptionTier?.toLowerCase() === 'basic').length;
-    const freeUsers = users.filter(u => !u.subscriptionTier || u.subscriptionTier?.toLowerCase() === 'free').length;
+    const ultraUsers = filteredUsers.filter(u => u.subscriptionTier?.toLowerCase() === 'ultra').length;
+    const proUsers = filteredUsers.filter(u => u.subscriptionTier?.toLowerCase() === 'pro').length;
+    const basicUsers = filteredUsers.filter(u => u.subscriptionTier?.toLowerCase() === 'basic').length;
+    const freeUsers = filteredUsers.filter(u => !u.subscriptionTier || u.subscriptionTier?.toLowerCase() === 'free').length;
     
     const totalSubscriptions = ultraUsers + proUsers + basicUsers;
     
@@ -196,15 +226,15 @@ export default function UsersPage() {
     const totalMMR = basicMMR + proMMR + ultraMMR;
     
     // Credits metrics
-    const totalFreeCreditsRemaining = users.reduce((sum, u) => sum + (u.freeCredits || 0), 0);
-    const totalSubscriptionCredits = users.reduce((sum, u) => sum + (u.subscriptionCredits || 0), 0);
-    const totalConsumableCredits = users.reduce((sum, u) => sum + (u.consumableCredits || 0), 0);
+    const totalFreeCreditsRemaining = filteredUsers.reduce((sum, u) => sum + (u.freeCredits || 0), 0);
+    const totalSubscriptionCredits = filteredUsers.reduce((sum, u) => sum + (u.subscriptionCredits || 0), 0);
+    const totalConsumableCredits = filteredUsers.reduce((sum, u) => sum + (u.consumableCredits || 0), 0);
     const totalCreditsDistributed = totalFreeCreditsRemaining + totalSubscriptionCredits + totalConsumableCredits;
     
     // Free credits usage metrics
     // Users who have used free credits (have 0 or very few remaining)
     // We'll consider users with 0 free credits as having used them
-    const usersWhoUsedFreeCredits = users.filter(u => {
+    const usersWhoUsedFreeCredits = filteredUsers.filter(u => {
       const tier = u.subscriptionTier?.toLowerCase() || 'free';
       return tier === 'free' && (u.freeCredits || 0) === 0;
     });
@@ -218,7 +248,7 @@ export default function UsersPage() {
     const totalFreeCreditsUsed = countUsersWhoUsedFreeCredits * estimatedInitialFreeCreditsPerUser;
     
     // Also calculate for users who partially used (have some but not all)
-    const usersWithPartialFreeCredits = users.filter(u => {
+    const usersWithPartialFreeCredits = filteredUsers.filter(u => {
       const tier = u.subscriptionTier?.toLowerCase() || 'free';
       const credits = u.freeCredits || 0;
       return tier === 'free' && credits > 0 && credits < estimatedInitialFreeCreditsPerUser;
@@ -235,7 +265,7 @@ export default function UsersPage() {
     const conversionRate = freeUsers > 0 ? (totalSubscriptions / (totalSubscriptions + freeUsers)) * 100 : 0;
     
     // ARPU (Average Revenue Per User)
-    const arpu = users.length > 0 ? totalMMR / users.length : 0;
+    const arpu = filteredUsers.length > 0 ? totalMMR / filteredUsers.length : 0;
     
     // ARR (Annual Recurring Revenue) - MMR * 12
     const arr = totalMMR * 12;
@@ -245,21 +275,21 @@ export default function UsersPage() {
     const sevenDaysAgo = now - (7 * 24 * 60 * 60 * 1000);
     const thirtyDaysAgo = now - (30 * 24 * 60 * 60 * 1000);
     
-    const newUsersLast7Days = users.filter(u => {
+    const newUsersLast7Days = filteredUsers.filter(u => {
       const createdAt = u.createdAt?.toMillis?.() || u.createdAt?.seconds * 1000 || 0;
       return createdAt >= sevenDaysAgo;
     }).length;
     
-    const newUsersLast30Days = users.filter(u => {
+    const newUsersLast30Days = filteredUsers.filter(u => {
       const createdAt = u.createdAt?.toMillis?.() || u.createdAt?.seconds * 1000 || 0;
       return createdAt >= thirtyDaysAgo;
     }).length;
     
     // Average credits per user
-    const averageCreditsPerUser = users.length > 0 ? totalCreditsDistributed / users.length : 0;
+    const averageCreditsPerUser = filteredUsers.length > 0 ? totalCreditsDistributed / filteredUsers.length : 0;
     
     // Credit utilization (for subscription users)
-    const subscriptionUsers = users.filter(u => {
+    const subscriptionUsers = filteredUsers.filter(u => {
       const tier = u.subscriptionTier?.toLowerCase() || 'free';
       return tier !== 'free';
     });
@@ -271,7 +301,7 @@ export default function UsersPage() {
       : 0;
     
     return {
-      totalUsers: users.length,
+      totalUsers: filteredUsers.length,
       totalSubscriptions,
       ultraUsers,
       proUsers,
@@ -295,10 +325,175 @@ export default function UsersPage() {
       averageCreditsPerUser,
       avgCreditsPerSubscriptionUser,
     };
-  }, [users]);
+  }, [filteredUsers]);
+
+  // Quick filter handlers
+  const handleQuickFilter = (days: number | 'today' | 'yesterday' | null) => {
+    if (days === null) {
+      // Clear filter
+      setDateFilterStart('');
+      setDateFilterEnd('');
+      return;
+    }
+    
+    const endDate = new Date();
+    const startDate = new Date();
+    
+    if (days === 'today') {
+      startDate.setHours(0, 0, 0, 0);
+      endDate.setHours(23, 59, 59, 999);
+    } else if (days === 'yesterday') {
+      startDate.setDate(startDate.getDate() - 1);
+      startDate.setHours(0, 0, 0, 0);
+      endDate.setDate(endDate.getDate() - 1);
+      endDate.setHours(23, 59, 59, 999);
+    } else {
+      startDate.setDate(startDate.getDate() - days);
+      startDate.setHours(0, 0, 0, 0);
+      endDate.setHours(23, 59, 59, 999);
+    }
+    
+    setDateFilterStart(startDate.toISOString().split('T')[0]);
+    setDateFilterEnd(endDate.toISOString().split('T')[0]);
+  };
+
+  // Check if a quick filter is active
+  const isQuickFilterActive = (days: number | 'today' | 'yesterday') => {
+    if (!dateFilterStart || !dateFilterEnd) return false;
+    
+    const endDate = new Date();
+    const startDate = new Date();
+    
+    if (days === 'today') {
+      startDate.setHours(0, 0, 0, 0);
+      endDate.setHours(23, 59, 59, 999);
+    } else if (days === 'yesterday') {
+      startDate.setDate(startDate.getDate() - 1);
+      startDate.setHours(0, 0, 0, 0);
+      endDate.setDate(endDate.getDate() - 1);
+      endDate.setHours(23, 59, 59, 999);
+    } else {
+      startDate.setDate(startDate.getDate() - days);
+      startDate.setHours(0, 0, 0, 0);
+      endDate.setHours(23, 59, 59, 999);
+    }
+    
+    const filterStart = new Date(dateFilterStart).toDateString();
+    const filterEnd = new Date(dateFilterEnd).toDateString();
+    const expectedStart = startDate.toDateString();
+    const expectedEnd = endDate.toDateString();
+    
+    return filterStart === expectedStart && filterEnd === expectedEnd;
+  };
 
   return (
     <div className="w-full space-y-6">
+      {/* Date Filter Controls */}
+      <section className="bg-white border-2 border-gray-200 rounded-xl shadow-lg p-6">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <h3 className="font-bold text-lg" style={{ color: '#141619' }}>Date Filter</h3>
+          </div>
+          
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Quick filter buttons */}
+            <div className="flex gap-2 flex-wrap">
+              <button
+                onClick={() => handleQuickFilter('today')}
+                className="px-3 py-1.5 text-xs font-medium rounded-lg border-2 transition-all hover:shadow-md"
+                style={{ 
+                  borderColor: isQuickFilterActive('today') ? '#FF9827' : '#d1d5db',
+                  backgroundColor: isQuickFilterActive('today') ? 'rgba(255, 152, 39, 0.1)' : 'transparent',
+                  color: isQuickFilterActive('today') ? '#FF9827' : '#6b7280'
+                }}
+              >
+                Today
+              </button>
+              <button
+                onClick={() => handleQuickFilter('yesterday')}
+                className="px-3 py-1.5 text-xs font-medium rounded-lg border-2 transition-all hover:shadow-md"
+                style={{ 
+                  borderColor: isQuickFilterActive('yesterday') ? '#FF9827' : '#d1d5db',
+                  backgroundColor: isQuickFilterActive('yesterday') ? 'rgba(255, 152, 39, 0.1)' : 'transparent',
+                  color: isQuickFilterActive('yesterday') ? '#FF9827' : '#6b7280'
+                }}
+              >
+                Yesterday
+              </button>
+              <button
+                onClick={() => handleQuickFilter(7)}
+                className="px-3 py-1.5 text-xs font-medium rounded-lg border-2 transition-all hover:shadow-md"
+                style={{ 
+                  borderColor: isQuickFilterActive(7) ? '#FF9827' : '#d1d5db',
+                  backgroundColor: isQuickFilterActive(7) ? 'rgba(255, 152, 39, 0.1)' : 'transparent',
+                  color: isQuickFilterActive(7) ? '#FF9827' : '#6b7280'
+                }}
+              >
+                Last 7 days
+              </button>
+              <button
+                onClick={() => handleQuickFilter(30)}
+                className="px-3 py-1.5 text-xs font-medium rounded-lg border-2 transition-all hover:shadow-md"
+                style={{ 
+                  borderColor: isQuickFilterActive(30) ? '#FF9827' : '#d1d5db',
+                  backgroundColor: isQuickFilterActive(30) ? 'rgba(255, 152, 39, 0.1)' : 'transparent',
+                  color: isQuickFilterActive(30) ? '#FF9827' : '#6b7280'
+                }}
+              >
+                Last 30 days
+              </button>
+              <button
+                onClick={() => handleQuickFilter(90)}
+                className="px-3 py-1.5 text-xs font-medium rounded-lg border-2 transition-all hover:shadow-md"
+                style={{ 
+                  borderColor: isQuickFilterActive(90) ? '#FF9827' : '#d1d5db',
+                  backgroundColor: isQuickFilterActive(90) ? 'rgba(255, 152, 39, 0.1)' : 'transparent',
+                  color: isQuickFilterActive(90) ? '#FF9827' : '#6b7280'
+                }}
+              >
+                Last 90 days
+              </button>
+              <button
+                onClick={() => handleQuickFilter(null)}
+                className="px-3 py-1.5 text-xs font-medium rounded-lg border-2 border-gray-300 text-gray-700 hover:bg-gray-50 transition-all"
+              >
+                Clear
+              </button>
+            </div>
+            
+            {/* Date range inputs */}
+            <div className="flex items-center gap-2">
+              <input
+                type="date"
+                value={dateFilterStart}
+                onChange={(e) => setDateFilterStart(e.target.value)}
+                className="border-2 border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              />
+              <span className="text-gray-500">to</span>
+              <input
+                type="date"
+                value={dateFilterEnd}
+                onChange={(e) => setDateFilterEnd(e.target.value)}
+                className="border-2 border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+        </div>
+        {(dateFilterStart || dateFilterEnd) && (
+          <div className="mt-3 pt-3 border-t border-gray-200">
+            <p className="text-xs text-gray-600">
+              Showing {filteredUsers.length} of {users.length} users
+              {dateFilterStart && dateFilterEnd && (
+                <span> from {new Date(dateFilterStart).toLocaleDateString()} to {new Date(dateFilterEnd).toLocaleDateString()}</span>
+              )}
+            </p>
+          </div>
+        )}
+      </section>
+
       {/* Metrics Summary */}
       <section className="bg-white border-2 border-gray-200 rounded-xl shadow-lg p-6">
         <h3 className="font-bold text-lg mb-4" style={{ color: '#141619' }}>Metrics Summary</h3>

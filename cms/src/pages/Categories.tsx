@@ -445,6 +445,20 @@ export default function CategoriesPage() {
     return orphaned;
   }, [subcategories, categories, viewFilter, selectedCategoryFilter]);
 
+  // Get visible subcategories based on view filter and category filter
+  const visibleSubcategories = useMemo(() => {
+    if (viewFilter === 'categories') return [];
+    
+    let result = subcategories;
+    
+    // Apply category filter if set
+    if (selectedCategoryFilter) {
+      result = result.filter(sub => sub.parentCategoryId === selectedCategoryFilter);
+    }
+    
+    return result;
+  }, [subcategories, viewFilter, selectedCategoryFilter]);
+
   // Auto-generate slug from name
   const handleNameChange = (name: string) => {
     setForm((f) => {
@@ -723,11 +737,16 @@ export default function CategoriesPage() {
                 </svg>
                 <span className="text-sm font-semibold" style={{ color: '#cc7820' }}>
                   {(() => {
+                    if (viewFilter === 'subcategories') {
+                      return visibleSubcategories.length;
+                    }
                     let count = visibleCategories.length;
                     visibleCategories.forEach(cat => {
                       count += getSubcategoriesForCategory(cat.id!).length;
                     });
-                    count += orphanedSubcategories.length;
+                    if (viewFilter === 'both') {
+                      count += orphanedSubcategories.length;
+                    }
                     return count;
                   })()} displayed
                 </span>
@@ -787,11 +806,11 @@ export default function CategoriesPage() {
                   </SortableContext>
                 </DndContext>
                 
-                {/* Orphaned subcategories (when showing all subcategories or when they have no valid parent) */}
-                {viewFilter === 'subcategories' && orphanedSubcategories.length > 0 && (
+                {/* All subcategories when viewFilter is 'subcategories' */}
+                {viewFilter === 'subcategories' && visibleSubcategories.length > 0 && (
                   <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSubcategoryDragEnd}>
-                    <SortableContext items={orphanedSubcategories.map((s) => s.id!)} strategy={verticalListSortingStrategy}>
-                      {orphanedSubcategories.map((subcategory) => (
+                    <SortableContext items={visibleSubcategories.map((s) => s.id!)} strategy={verticalListSortingStrategy}>
+                      {visibleSubcategories.map((subcategory) => (
                         <SortableSubcategoryRow
                           key={subcategory.id}
                           subcategory={subcategory}
