@@ -14,7 +14,7 @@ import {
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../lib/firebase';
 import { resizeImage } from '../lib/imageResize';
-import type { Category, Subcategory } from '../types';
+import type { Category, Subcategory, Filter } from '../types';
 import {
   DndContext,
   closestCenter,
@@ -103,11 +103,12 @@ function emptyForm(): FormState {
 
 interface SortableCategoryRowProps {
   category: Category;
+  filterCount: number;
   onEdit: (category: Category) => void;
   onDelete: (id: string) => void;
 }
 
-function SortableCategoryRow({ category, onEdit, onDelete }: SortableCategoryRowProps) {
+function SortableCategoryRow({ category, filterCount, onEdit, onDelete }: SortableCategoryRowProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: category.id!,
   });
@@ -185,6 +186,14 @@ function SortableCategoryRow({ category, onEdit, onDelete }: SortableCategoryRow
           <span className="text-xs text-gray-400">—</span>
         )}
       </td>
+      <td className="py-3 pr-3">
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+          </svg>
+          {filterCount}
+        </span>
+      </td>
       <td className="py-3 flex gap-2">
         <button 
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 font-medium hover:text-white transition-all duration-200 shadow-sm hover:shadow-md" 
@@ -229,12 +238,13 @@ function SortableCategoryRow({ category, onEdit, onDelete }: SortableCategoryRow
 
 interface SortableSubcategoryRowProps {
   subcategory: Subcategory;
+  filterCount: number;
   getCategoryName: (id: string) => string;
   onEdit: (subcategory: Subcategory) => void;
   onDelete: (id: string) => void;
 }
 
-function SortableSubcategoryRow({ subcategory, getCategoryName, onEdit, onDelete }: SortableSubcategoryRowProps) {
+function SortableSubcategoryRow({ subcategory, filterCount, getCategoryName, onEdit, onDelete }: SortableSubcategoryRowProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: subcategory.id!,
   });
@@ -310,6 +320,14 @@ function SortableSubcategoryRow({ subcategory, getCategoryName, onEdit, onDelete
       <td className="py-3 pr-3">
         <span className="text-xs text-gray-400">—</span>
       </td>
+      <td className="py-3 pr-3">
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+          </svg>
+          {filterCount}
+        </span>
+      </td>
       <td className="py-3 flex gap-2">
         <button 
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 font-medium hover:text-white transition-all duration-200 shadow-sm hover:shadow-md" 
@@ -355,6 +373,7 @@ function SortableSubcategoryRow({ subcategory, getCategoryName, onEdit, onDelete
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
+  const [filters, setFilters] = useState<Filter[]>([]);
   const [form, setForm] = useState<FormState>(() => emptyForm());
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -397,9 +416,16 @@ export default function CategoriesPage() {
       setSubcategories(rows);
     });
     
+    const qFilters = query(collection(db, 'filters_feed'), orderBy('order', 'asc'));
+    const unsubFilters = onSnapshot(qFilters, (snap) => {
+      const rows: Filter[] = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
+      setFilters(rows);
+    });
+    
     return () => {
       unsubCat();
       unsubSub();
+      unsubFilters();
     };
   }, []);
 
@@ -458,6 +484,16 @@ export default function CategoriesPage() {
     
     return result;
   }, [subcategories, viewFilter, selectedCategoryFilter]);
+
+  // Helper function to count filters for a category
+  const getFilterCountForCategory = (categoryId: string) => {
+    return filters.filter(f => f.category === categoryId).length;
+  };
+
+  // Helper function to count filters for a subcategory
+  const getFilterCountForSubcategory = (subcategoryId: string) => {
+    return filters.filter(f => f.subcategory === subcategoryId).length;
+  };
 
   // Auto-generate slug from name
   const handleNameChange = (name: string) => {
@@ -766,6 +802,7 @@ export default function CategoriesPage() {
                   <th className="py-3 pr-3 font-bold text-gray-700 text-xs uppercase tracking-wider">Order</th>
                   <th className="py-3 pr-3 font-bold text-gray-700 text-xs uppercase tracking-wider">Visible</th>
                   <th className="py-3 pr-3 font-bold text-gray-700 text-xs uppercase tracking-wider">Has Subs</th>
+                  <th className="py-3 pr-3 font-bold text-gray-700 text-xs uppercase tracking-wider">Filters</th>
                   <th className="py-3 pr-3 font-bold text-gray-700 text-xs uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
@@ -780,6 +817,7 @@ export default function CategoriesPage() {
                           {/* Category Row */}
                           <SortableCategoryRow
                             category={category}
+                            filterCount={getFilterCountForCategory(category.id!)}
                             onEdit={startEditCategory}
                             onDelete={removeCategory}
                           />
@@ -792,6 +830,7 @@ export default function CategoriesPage() {
                                   <SortableSubcategoryRow
                                     key={subcategory.id}
                                     subcategory={subcategory}
+                                    filterCount={getFilterCountForSubcategory(subcategory.id!)}
                                     getCategoryName={getCategoryName}
                                     onEdit={startEditSubcategory}
                                     onDelete={removeSubcategory}
@@ -814,6 +853,7 @@ export default function CategoriesPage() {
                         <SortableSubcategoryRow
                           key={subcategory.id}
                           subcategory={subcategory}
+                          filterCount={getFilterCountForSubcategory(subcategory.id!)}
                           getCategoryName={getCategoryName}
                           onEdit={startEditSubcategory}
                           onDelete={removeSubcategory}
