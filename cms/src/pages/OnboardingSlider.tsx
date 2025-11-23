@@ -40,6 +40,7 @@ interface FormState {
   after_image_url: string;
   order: number;
   visible: boolean;
+  showUI: boolean;
 }
 
 function emptyForm(): FormState {
@@ -50,6 +51,7 @@ function emptyForm(): FormState {
     after_image_url: '',
     order: 0,
     visible: true,
+    showUI: true,
   };
 }
 
@@ -114,6 +116,23 @@ function SortableSliderRow({ slider, onEdit, onDelete }: SortableSliderRowProps)
       <td className="py-3 pr-3">
         {slider.visible ? (
           <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+            </svg>
+            Yes
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600">
+            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+            </svg>
+            No
+          </span>
+        )}
+      </td>
+      <td className="py-3 pr-3">
+        {slider.showUI !== false ? (
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
             <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
             </svg>
@@ -215,7 +234,38 @@ export default function OnboardingSliderPage() {
     }
   }, [sliders.length]);
 
-  // Resize and upload image helper with 90% quality for JPG
+  // Check if a WebP file is animated by reading the file structure
+  async function isAnimatedWebP(file: File): Promise<boolean> {
+    if (!file.type.includes('webp') && !file.name.toLowerCase().endsWith('.webp')) {
+      return false;
+    }
+    
+    try {
+      // Read first 64 bytes to check for ANIM chunk
+      // Animated WebP files have "ANIM" chunk in their structure
+      const buffer = await file.slice(0, 64).arrayBuffer();
+      const bytes = new Uint8Array(buffer);
+      
+      // WebP files start with "RIFF"
+      const header = String.fromCharCode(...bytes.slice(0, 4));
+      if (header !== 'RIFF') return false;
+      
+      // Check for "WEBP" identifier at offset 8
+      const webpId = String.fromCharCode(...bytes.slice(8, 12));
+      if (webpId !== 'WEBP') return false;
+      
+      // Search for "ANIM" chunk in the first 64 bytes
+      // ANIM chunk typically appears after the VP8X chunk header
+      const fileString = String.fromCharCode(...bytes);
+      return fileString.includes('ANIM');
+    } catch (error) {
+      console.warn('Error checking for animated WebP:', error);
+      // If we can't determine and it's a WebP file, assume it might be animated to preserve it
+      return file.type.includes('webp') || file.name.toLowerCase().endsWith('.webp');
+    }
+  }
+
+  // Resize and upload image helper with format preservation for WebP
   async function resizeAndUploadImage(
     file: File, 
     existingUrl: string, 
@@ -223,10 +273,30 @@ export default function OnboardingSliderPage() {
   ): Promise<string> {
     if (!file) return existingUrl;
     
-    // Resize to 620x1344
+    // Check if it's an animated WebP
+    const isAnimated = await isAnimatedWebP(file);
+    
+    // For animated WebP, upload directly without canvas processing to preserve animation
+    if (isAnimated) {
+      const fileRef = ref(
+        storage, 
+        `onboarding_sliders/${type}_${Date.now()}_${Math.random().toString(36).slice(2)}.webp`
+      );
+      await uploadBytes(fileRef, file, { contentType: 'image/webp' });
+      const url = await getDownloadURL(fileRef);
+      return url;
+    }
+    
+    // For non-animated images, resize and convert
     const resized = await resizeImage(file, 620, 1344);
     
-    // Create a new File object for JPG with 90% quality
+    // Determine output format: preserve WebP, convert others to JPG
+    const isWebP = file.type.includes('webp');
+    const outputFormat = isWebP ? 'image/webp' : 'image/jpeg';
+    const extension = isWebP ? 'webp' : 'jpg';
+    const quality = isWebP ? 0.9 : 0.9; // 90% quality for both
+    
+    // Create a new File object with proper format
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     const img = new Image();
@@ -246,15 +316,15 @@ export default function OnboardingSliderPage() {
             
             const fileRef = ref(
               storage, 
-              `onboarding_sliders/${type}_${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`
+              `onboarding_sliders/${type}_${Date.now()}_${Math.random().toString(36).slice(2)}.${extension}`
             );
             const buf = await blob.arrayBuffer();
-            await uploadBytes(fileRef, new Uint8Array(buf), { contentType: 'image/jpeg' });
+            await uploadBytes(fileRef, new Uint8Array(buf), { contentType: outputFormat });
             const url = await getDownloadURL(fileRef);
             resolve(url);
           },
-          'image/jpeg',
-          0.9 // 90% quality
+          outputFormat,
+          quality
         );
       };
       
@@ -283,6 +353,7 @@ export default function OnboardingSliderPage() {
         after_image_url: afterImageUrl,
         order: form.order,
         visible: form.visible,
+        showUI: form.showUI,
         updatedAt: serverTimestamp(),
       };
 
@@ -303,7 +374,11 @@ export default function OnboardingSliderPage() {
 
   function startEdit(slider: OnboardingSlider) {
     const { id, updatedAt, ...rest } = slider;
-    setForm({ ...emptyForm(), ...rest });
+    setForm({ 
+      ...emptyForm(), 
+      ...rest,
+      showUI: rest.showUI !== undefined ? rest.showUI : true, // Default to true if not set
+    });
     setEditingId(id!);
   }
 
@@ -380,6 +455,7 @@ export default function OnboardingSliderPage() {
                   <th className="py-3 pr-3 font-bold text-gray-700 text-xs uppercase tracking-wider">After</th>
                   <th className="py-3 pr-3 font-bold text-gray-700 text-xs uppercase tracking-wider">Order</th>
                   <th className="py-3 pr-3 font-bold text-gray-700 text-xs uppercase tracking-wider">Visible</th>
+                  <th className="py-3 pr-3 font-bold text-gray-700 text-xs uppercase tracking-wider">Show UI</th>
                   <th className="py-3 pr-3 font-bold text-gray-700 text-xs uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
@@ -447,7 +523,7 @@ export default function OnboardingSliderPage() {
                 required
               />
             </div>
-            <div className="py-3 border-t border-gray-200">
+            <div className="py-3 border-t border-gray-200 space-y-3">
               <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                 <input
                   id="visible"
@@ -464,11 +540,26 @@ export default function OnboardingSliderPage() {
                   </svg>
                 )}
               </div>
+              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                <input
+                  id="showUI"
+                  type="checkbox"
+                  checked={form.showUI}
+                  onChange={(e) => setForm((f) => ({ ...f, showUI: e.target.checked }))}
+                  className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-orange-500 cursor-pointer"
+                />
+                <label htmlFor="showUI" className="text-sm font-medium text-gray-700 cursor-pointer flex-1">Show UI</label>
+                {form.showUI && (
+                  <svg className="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M3 5a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2h-2.22l.123.489.804.804A1 1 0 0113 18H7a1 1 0 01-.707-1.707l.804-.804L7.22 15H5a2 2 0 01-2-2V5zm5.771 7H5V5h10v7H8.771z" clipRule="evenodd" />
+                  </svg>
+                )}
+              </div>
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Before Image 
-                <span className="text-xs font-normal text-gray-500 ml-1">(JPG 620×1344)</span>
+                <span className="text-xs font-normal text-gray-500 ml-1">(JPG/WebP 620×1344, animated WebP supported)</span>
               </label>
               <input 
                 type="file" 
@@ -493,7 +584,7 @@ export default function OnboardingSliderPage() {
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 After Image 
-                <span className="text-xs font-normal text-gray-500 ml-1">(JPG 620×1344)</span>
+                <span className="text-xs font-normal text-gray-500 ml-1">(JPG/WebP 620×1344, animated WebP supported)</span>
               </label>
               <input 
                 type="file" 

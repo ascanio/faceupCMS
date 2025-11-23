@@ -52,6 +52,7 @@ export interface OnboardingSlider {
 	after_image_url: string;
 	order: number;
 	visible: boolean;
+	showUI: boolean;
 	updatedAt?: Timestamp; // set by server
 }
 
