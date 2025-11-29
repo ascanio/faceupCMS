@@ -5,6 +5,7 @@ import FiltersPage from './pages/Filters'
 import FiltersListPage from './pages/FiltersList'
 import OnboardingSliderPage from './pages/OnboardingSlider'
 import UsersPage from './pages/Users'
+import PromptCategoriesPage from './pages/PromptCategories'
 
 function App() {
   return (
@@ -104,6 +105,22 @@ function App() {
                 </svg>
                 Users
               </NavLink>
+              <NavLink
+                to="/prompt-categories"
+                className={({ isActive }) =>
+                  `px-5 py-2.5 rounded-lg font-medium transition-all duration-200 flex items-center gap-2 ${
+                    isActive 
+                      ? 'text-white shadow-lg' 
+                      : 'hover:bg-gray-100'
+                  }`
+                }
+                style={({ isActive }) => isActive ? { backgroundColor: '#FF9827', boxShadow: '0 10px 25px -5px rgba(255, 152, 39, 0.3)' } : { color: '#141619' }}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                </svg>
+                Prompt Categories
+              </NavLink>
             </nav>
           </div>
         </header>
@@ -115,6 +132,7 @@ function App() {
             <Route path="/categories" element={<CategoriesPage />} />
             <Route path="/onboarding" element={<OnboardingSliderPage />} />
             <Route path="/users" element={<UsersPage />} />
+            <Route path="/prompt-categories" element={<PromptCategoriesPage />} />
           </Routes>
         </main>
       </div>

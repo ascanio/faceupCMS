@@ -50,6 +50,7 @@ export interface OnboardingSlider {
 	text: string;
 	before_image_url: string;
 	after_image_url: string;
+	video_url?: string; // Video URL when showUI is false
 	order: number;
 	visible: boolean;
 	showUI: boolean;
@@ -64,5 +65,27 @@ export interface User {
 	subscriptionTier?: string; // e.g., "free", "pro", "premium"
 	createdAt?: Timestamp;
 	updatedAt?: Timestamp;
+}
+
+export interface PromptOption {
+	id: string;
+	label: string;
+	value: string;
+	order: number;
+	visible: boolean;
+	defaultSelected: boolean;
+	tags?: string[];
+}
+
+export interface PromptCategory {
+	id?: string; // Firestore document id
+	name: string;
+	icon: string;
+	order: number;
+	visible: boolean;
+	multiSelect: boolean;
+	tags?: string[];
+	options: PromptOption[];
+	updatedAt?: Timestamp; // set by server
 }
 

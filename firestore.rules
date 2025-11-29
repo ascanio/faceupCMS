@@ -1,139 +1,95 @@
 rules_version = '2';
-
 service cloud.firestore {
-
   match /databases/{database}/documents {
-
     
-
     // ===========================================
-
     // USER DOCUMENTS - Read/Write own data only
-
     // ===========================================
-
     match /users/{userId} {
-
-      // CMS can read all users (no auth), or users can read their own document
-
-      allow read: if request.auth == null || (request.auth != null && request.auth.uid == userId);
-
+      // Users can read their own document
+      allow read: if request.auth != null && request.auth.uid == userId;
       
-
       // Users can create their own document with validated credit fields
-
       allow create: if request.auth != null 
-
                     && request.auth.uid == userId
-
                     && request.resource.data.subscriptionCredits is int
-
                     && request.resource.data.subscriptionCredits >= 0
-
                     && request.resource.data.consumableCredits is int
-
                     && request.resource.data.consumableCredits >= 0;
-
       
-
       // Users can update their own document with validated credit fields
-
       allow update: if request.auth != null 
-
                     && request.auth.uid == userId
-
                     && (!("subscriptionCredits" in request.resource.data) || (request.resource.data.subscriptionCredits is int && request.resource.data.subscriptionCredits >= 0))
-
                     && (!("consumableCredits" in request.resource.data) || (request.resource.data.consumableCredits is int && request.resource.data.consumableCredits >= 0));
-
       
-
       // No delete allowed from client
-
       allow delete: if false;
-
     }
 
-
-
     // ===========================================
-
     // CATEGORIES - Public read/write for CMS
-
     // ===========================================
-
     match /categories/{categoryId} {
-
       // Anyone can read and write categories (CMS has no auth)
-
       allow read, write: if true;
-
     }
-
     
-
     // ===========================================
-
     // FILTERS - Public read/write for CMS
-
     // ===========================================
-
     match /filters_feed/{filterId} {
-
       // Anyone can read and write filters (CMS has no auth)
-
       allow read, write: if true;
-
     }
-
     
-
     // ===========================================
-
     // SUBCATEGORIES - Public read/write for CMS
-
     // ===========================================
-
     match /subcategories/{subcategoryId} {
-
       // Anyone can read and write subcategories (CMS has no auth)
-
       allow read, write: if true;
-
     }
 
-
-
     // ===========================================
-
-    // ONBOARDING SLIDERS - Public read/write for CMS
-
+    // ONBOARDING SLIDERS - Public read/write
     // ===========================================
-
     match /onboarding_sliders/{sliderId} {
-
-      // Anyone can read and write onboarding sliders (CMS has no auth)
-
       allow read, write: if true;
-
     }
-
     
-
     // ===========================================
-
-    // DEFAULT DENY - All other collections
-
+    // PROMPT CATEGORIES - Public read/write for CMS
     // ===========================================
-
-    // Any collection not explicitly defined above is denied
-
-    match /{document=**} {
-
+    match /promptCategories/{categoryId} {
+      // Anyone can read and write prompt categories (CMS has no auth)
+      allow read, write: if true;
+    }
+    
+    // ===========================================
+    // NOTIFICATION TRACKING - Server-only access
+    // ===========================================
+    match /notification_tracking/{docId} {
+      // Only Cloud Functions can access this (they have admin privileges)
       allow read, write: if false;
-
     }
 
+    // ===========================================
+    // DEFAULT DENY - All other collections
+    // ===========================================
+    // Any collection not explicitly defined above is denied
+    match /{document=**} {
+      allow read, write: if false;
+    }
+    
+    // ===========================================
+    // USERS - Override for CMS access
+    // ===========================================
+    // CMS needs public access - this overrides the secure rules above
+    match /users/{userId} {
+      allow read: if true;
+      allow write: if true;
+    }
   }
-
 }
+

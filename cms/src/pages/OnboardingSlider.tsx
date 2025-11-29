@@ -38,6 +38,7 @@ interface FormState {
   text: string;
   before_image_url: string;
   after_image_url: string;
+  video_url: string;
   order: number;
   visible: boolean;
   showUI: boolean;
@@ -49,6 +50,7 @@ function emptyForm(): FormState {
     text: '',
     before_image_url: '',
     after_image_url: '',
+    video_url: '',
     order: 0,
     visible: true,
     showUI: true,
@@ -90,28 +92,51 @@ function SortableSliderRow({ slider, onEdit, onDelete }: SortableSliderRowProps)
       </td>
       <td className="py-3 pr-3 font-semibold" style={{ color: '#141619' }}>{slider.title}</td>
       <td className="py-3 pr-3 text-sm text-gray-600 max-w-xs truncate">{slider.text}</td>
-      <td className="py-3 pr-3">
-        {slider.before_image_url ? (
-          <img src={slider.before_image_url} alt="Before" className="w-12 h-auto object-cover border-2 border-gray-200 rounded-lg shadow-sm" />
-        ) : (
-          <div className="w-12 h-25 bg-gradient-to-br from-gray-100 to-gray-200 border-2 border-gray-300 rounded-lg flex items-center justify-center text-xs text-gray-400">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-          </div>
-        )}
-      </td>
-      <td className="py-3 pr-3">
-        {slider.after_image_url ? (
-          <img src={slider.after_image_url} alt="After" className="w-12 h-auto object-cover border-2 border-gray-200 rounded-lg shadow-sm" />
-        ) : (
-          <div className="w-12 h-25 bg-gradient-to-br from-gray-100 to-gray-200 border-2 border-gray-300 rounded-lg flex items-center justify-center text-xs text-gray-400">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-          </div>
-        )}
-      </td>
+      {slider.showUI !== false ? (
+        <>
+          <td className="py-3 pr-3">
+            {slider.before_image_url ? (
+              <img src={slider.before_image_url} alt="Before" className="w-12 h-auto object-cover border-2 border-gray-200 rounded-lg shadow-sm" />
+            ) : (
+              <div className="w-12 h-25 bg-gradient-to-br from-gray-100 to-gray-200 border-2 border-gray-300 rounded-lg flex items-center justify-center text-xs text-gray-400">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+            )}
+          </td>
+          <td className="py-3 pr-3">
+            {slider.after_image_url ? (
+              <img src={slider.after_image_url} alt="After" className="w-12 h-auto object-cover border-2 border-gray-200 rounded-lg shadow-sm" />
+            ) : (
+              <div className="w-12 h-25 bg-gradient-to-br from-gray-100 to-gray-200 border-2 border-gray-300 rounded-lg flex items-center justify-center text-xs text-gray-400">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+            )}
+          </td>
+        </>
+      ) : (
+        <>
+          <td className="py-3 pr-3" colSpan={2}>
+            {slider.video_url ? (
+              <video 
+                src={slider.video_url} 
+                className="w-24 h-auto object-cover border-2 border-gray-200 rounded-lg shadow-sm"
+                muted
+                playsInline
+              />
+            ) : (
+              <div className="w-24 h-32 bg-gradient-to-br from-gray-100 to-gray-200 border-2 border-gray-300 rounded-lg flex items-center justify-center text-xs text-gray-400">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+              </div>
+            )}
+          </td>
+        </>
+      )}
       <td className="py-3 pr-3 text-sm text-gray-700 font-medium">{slider.order}</td>
       <td className="py-3 pr-3">
         {slider.visible ? (
@@ -196,6 +221,7 @@ export default function OnboardingSliderPage() {
   const [loading, setLoading] = useState(false);
   const [beforeImageFile, setBeforeImageFile] = useState<File | null>(null);
   const [afterImageFile, setAfterImageFile] = useState<File | null>(null);
+  const [videoFile, setVideoFile] = useState<File | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -333,40 +359,81 @@ export default function OnboardingSliderPage() {
     });
   }
 
+  // Upload video file helper
+  async function uploadVideo(file: File, existingUrl: string): Promise<string> {
+    if (!file) return existingUrl;
+    
+    const fileRef = ref(
+      storage, 
+      `onboarding_sliders/video_${Date.now()}_${Math.random().toString(36).slice(2)}.mp4`
+    );
+    await uploadBytes(fileRef, file, { contentType: 'video/mp4' });
+    const url = await getDownloadURL(fileRef);
+    return url;
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     
     setLoading(true);
     try {
-      const beforeImageUrl = beforeImageFile 
-        ? await resizeAndUploadImage(beforeImageFile, form.before_image_url, 'before')
-        : form.before_image_url;
-        
-      const afterImageUrl = afterImageFile
-        ? await resizeAndUploadImage(afterImageFile, form.after_image_url, 'after')
-        : form.after_image_url;
+      if (form.showUI) {
+        // Show UI mode: use before/after images
+        const beforeImageUrl = beforeImageFile 
+          ? await resizeAndUploadImage(beforeImageFile, form.before_image_url, 'before')
+          : form.before_image_url;
+          
+        const afterImageUrl = afterImageFile
+          ? await resizeAndUploadImage(afterImageFile, form.after_image_url, 'after')
+          : form.after_image_url;
 
-      const payload = {
-        title: form.title,
-        text: form.text,
-        before_image_url: beforeImageUrl,
-        after_image_url: afterImageUrl,
-        order: form.order,
-        visible: form.visible,
-        showUI: form.showUI,
-        updatedAt: serverTimestamp(),
-      };
+        const payload = {
+          title: form.title,
+          text: form.text,
+          before_image_url: beforeImageUrl,
+          after_image_url: afterImageUrl,
+          video_url: '', // Clear video_url when showUI is true
+          order: form.order,
+          visible: form.visible,
+          showUI: form.showUI,
+          updatedAt: serverTimestamp(),
+        };
 
-      if (editingId) {
-        await updateDoc(doc(db, 'onboarding_sliders', editingId), payload);
+        if (editingId) {
+          await updateDoc(doc(db, 'onboarding_sliders', editingId), payload);
+        } else {
+          await addDoc(collection(db, 'onboarding_sliders'), payload);
+        }
       } else {
-        await addDoc(collection(db, 'onboarding_sliders'), payload);
+        // No UI mode: use video
+        const videoUrl = videoFile
+          ? await uploadVideo(videoFile, form.video_url)
+          : form.video_url;
+
+        const payload = {
+          title: form.title,
+          text: form.text,
+          before_image_url: '', // Clear image URLs when showUI is false
+          after_image_url: '',
+          video_url: videoUrl,
+          order: form.order,
+          visible: form.visible,
+          showUI: form.showUI,
+          updatedAt: serverTimestamp(),
+        };
+
+        if (editingId) {
+          await updateDoc(doc(db, 'onboarding_sliders', editingId), payload);
+        } else {
+          await addDoc(collection(db, 'onboarding_sliders'), payload);
+        }
       }
       
       setForm(emptyForm());
       setEditingId(null);
       setBeforeImageFile(null);
       setAfterImageFile(null);
+      setVideoFile(null);
     } finally {
       setLoading(false);
     }
@@ -377,9 +444,13 @@ export default function OnboardingSliderPage() {
     setForm({ 
       ...emptyForm(), 
       ...rest,
+      video_url: rest.video_url || '',
       showUI: rest.showUI !== undefined ? rest.showUI : true, // Default to true if not set
     });
     setEditingId(id!);
+    setBeforeImageFile(null);
+    setAfterImageFile(null);
+    setVideoFile(null);
   }
 
   async function remove(id: string) {
@@ -545,7 +616,19 @@ export default function OnboardingSliderPage() {
                   id="showUI"
                   type="checkbox"
                   checked={form.showUI}
-                  onChange={(e) => setForm((f) => ({ ...f, showUI: e.target.checked }))}
+                  onChange={(e) => {
+                    const newShowUI = e.target.checked;
+                    setForm((f) => ({ ...f, showUI: newShowUI }));
+                    // Clear file states when toggling
+                    if (newShowUI) {
+                      setVideoFile(null);
+                      setForm((f) => ({ ...f, video_url: '' }));
+                    } else {
+                      setBeforeImageFile(null);
+                      setAfterImageFile(null);
+                      setForm((f) => ({ ...f, before_image_url: '', after_image_url: '' }));
+                    }
+                  }}
                   className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-orange-500 cursor-pointer"
                 />
                 <label htmlFor="showUI" className="text-sm font-medium text-gray-700 cursor-pointer flex-1">Show UI</label>
@@ -556,56 +639,92 @@ export default function OnboardingSliderPage() {
                 )}
               </div>
             </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Before Image 
-                <span className="text-xs font-normal text-gray-500 ml-1">(JPG/WebP 620×1344, animated WebP supported)</span>
-              </label>
-              <input 
-                type="file" 
-                accept="image/*" 
-                onChange={(e) => setBeforeImageFile(e.target.files?.[0] || null)}
-                className="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 file:cursor-pointer cursor-pointer"
-              />
-              {form.before_image_url && (
-                <div className="mt-3 p-3 bg-gray-50 rounded-lg border-2 border-gray-200">
-                  <img src={form.before_image_url} alt="Before preview" className="w-auto h-40 object-cover border-2 border-gray-300 rounded-lg shadow-sm mx-auto" />
-                  {beforeImageFile && (
-                    <p className="text-xs text-indigo-600 mt-2 text-center font-medium flex items-center justify-center gap-1">
-                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                      </svg>
-                      New image selected
-                    </p>
+            {form.showUI ? (
+              <>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Before Image 
+                    <span className="text-xs font-normal text-gray-500 ml-1">(JPG/WebP 620×1344, animated WebP supported)</span>
+                  </label>
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={(e) => setBeforeImageFile(e.target.files?.[0] || null)}
+                    className="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 file:cursor-pointer cursor-pointer"
+                  />
+                  {form.before_image_url && (
+                    <div className="mt-3 p-3 bg-gray-50 rounded-lg border-2 border-gray-200">
+                      <img src={form.before_image_url} alt="Before preview" className="w-auto h-40 object-cover border-2 border-gray-300 rounded-lg shadow-sm mx-auto" />
+                      {beforeImageFile && (
+                        <p className="text-xs text-indigo-600 mt-2 text-center font-medium flex items-center justify-center gap-1">
+                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                          New image selected
+                        </p>
+                      )}
+                    </div>
                   )}
                 </div>
-              )}
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                After Image 
-                <span className="text-xs font-normal text-gray-500 ml-1">(JPG/WebP 620×1344, animated WebP supported)</span>
-              </label>
-              <input 
-                type="file" 
-                accept="image/*" 
-                onChange={(e) => setAfterImageFile(e.target.files?.[0] || null)}
-                className="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 file:cursor-pointer cursor-pointer"
-              />
-              {form.after_image_url && (
-                <div className="mt-3 p-3 bg-gray-50 rounded-lg border-2 border-gray-200">
-                  <img src={form.after_image_url} alt="After preview" className="w-auto h-40 object-cover border-2 border-gray-300 rounded-lg shadow-sm mx-auto" />
-                  {afterImageFile && (
-                    <p className="text-xs text-indigo-600 mt-2 text-center font-medium flex items-center justify-center gap-1">
-                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                      </svg>
-                      New image selected
-                    </p>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    After Image 
+                    <span className="text-xs font-normal text-gray-500 ml-1">(JPG/WebP 620×1344, animated WebP supported)</span>
+                  </label>
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={(e) => setAfterImageFile(e.target.files?.[0] || null)}
+                    className="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 file:cursor-pointer cursor-pointer"
+                  />
+                  {form.after_image_url && (
+                    <div className="mt-3 p-3 bg-gray-50 rounded-lg border-2 border-gray-200">
+                      <img src={form.after_image_url} alt="After preview" className="w-auto h-40 object-cover border-2 border-gray-300 rounded-lg shadow-sm mx-auto" />
+                      {afterImageFile && (
+                        <p className="text-xs text-indigo-600 mt-2 text-center font-medium flex items-center justify-center gap-1">
+                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                          New image selected
+                        </p>
+                      )}
+                    </div>
                   )}
                 </div>
-              )}
-            </div>
+              </>
+            ) : (
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Video 
+                  <span className="text-xs font-normal text-gray-500 ml-1">(MP4 format)</span>
+                </label>
+                <input 
+                  type="file" 
+                  accept="video/mp4" 
+                  onChange={(e) => setVideoFile(e.target.files?.[0] || null)}
+                  className="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 file:cursor-pointer cursor-pointer"
+                />
+                {form.video_url && (
+                  <div className="mt-3 p-3 bg-gray-50 rounded-lg border-2 border-gray-200">
+                    <video 
+                      src={form.video_url} 
+                      className="w-full max-h-60 object-contain border-2 border-gray-300 rounded-lg shadow-sm mx-auto"
+                      controls
+                      muted
+                      playsInline
+                    />
+                    {videoFile && (
+                      <p className="text-xs text-indigo-600 mt-2 text-center font-medium flex items-center justify-center gap-1">
+                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        New video selected
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
             <div className="flex gap-3 pt-4 border-t border-gray-200">
               <button 
                 disabled={loading} 
@@ -643,6 +762,7 @@ export default function OnboardingSliderPage() {
                     setForm(emptyForm());
                     setBeforeImageFile(null);
                     setAfterImageFile(null);
+                    setVideoFile(null);
                   }}
                 >
                   Cancel

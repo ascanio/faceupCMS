@@ -321,8 +321,31 @@ export default function FiltersPage() {
 
   const title = useMemo(() => (editingId ? 'Edit Filter' : 'Create Filter'), [editingId]);
 
+  // Check if a file is a GIF (by type or extension)
+  function isGIF(file: File): boolean {
+    const isGifByType = file.type === 'image/gif' || file.type.includes('gif');
+    const isGifByExtension = file.name.toLowerCase().endsWith('.gif');
+    return isGifByType || isGifByExtension;
+  }
+
   async function uploadThumbIfNeeded(existingUrl?: string): Promise<string> {
     if (!file) return existingUrl || '';
+    
+    // For GIF files (including animated), upload directly without canvas processing to preserve animation
+    if (isGIF(file)) {
+      console.log('Uploading GIF file directly (preserving animation):', file.name, file.type);
+      const fileRef = ref(
+        storage, 
+        `filters/${Date.now()}_${Math.random().toString(36).slice(2)}.gif`
+      );
+      await uploadBytes(fileRef, file, { contentType: 'image/gif' });
+      const url = await getDownloadURL(fileRef);
+      console.log('GIF uploaded successfully:', url);
+      return url;
+    }
+    
+    // For non-GIF images, resize and convert
+    console.log('Processing non-GIF image:', file.name, file.type);
     const resized = await resizeImage(file, 192, 240);
     // Preserve the original file extension and content type
     const ext = resized.type === 'image/png' ? 'png' : 'jpg';
@@ -1193,7 +1216,7 @@ export default function FiltersPage() {
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Thumbnail 
-                <span className="text-xs font-normal text-gray-500 ml-1">(192×240)</span>
+                <span className="text-xs font-normal text-gray-500 ml-1">(192×240, animated GIF supported)</span>
               </label>
               <input 
                 type="file" 
@@ -1201,9 +1224,23 @@ export default function FiltersPage() {
                 onChange={(e) => setFile(e.target.files?.[0] || null)}
                 className="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 file:cursor-pointer cursor-pointer"
               />
-              {form.thumb_128 && (
+              {(form.thumb_128 || file) && (
                 <div className="mt-3 p-3 bg-gray-50 rounded-lg border-2 border-gray-200">
-                  <img src={form.thumb_128} alt="Thumb preview" className="w-26 h-32 object-cover border-2 border-gray-300 rounded-lg shadow-sm mx-auto" />
+                  {file && isGIF(file) ? (
+                    <img 
+                      src={URL.createObjectURL(file)} 
+                      alt="Thumb preview" 
+                      className="w-26 h-32 object-cover border-2 border-gray-300 rounded-lg shadow-sm mx-auto" 
+                    />
+                  ) : form.thumb_128 ? (
+                    <img src={form.thumb_128} alt="Thumb preview" className="w-26 h-32 object-cover border-2 border-gray-300 rounded-lg shadow-sm mx-auto" />
+                  ) : file ? (
+                    <img 
+                      src={URL.createObjectURL(file)} 
+                      alt="Thumb preview" 
+                      className="w-26 h-32 object-cover border-2 border-gray-300 rounded-lg shadow-sm mx-auto" 
+                    />
+                  ) : null}
                   {!file && (form.category || form.subcategory) && (
                     <p className="text-xs text-gray-600 mt-2 text-center flex items-center justify-center gap-1">
                       <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1217,7 +1254,7 @@ export default function FiltersPage() {
                       <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                       </svg>
-                      New image selected
+                      New image selected {isGIF(file) && '(GIF - animation will be preserved)'}
                     </p>
                   )}
                 </div>
