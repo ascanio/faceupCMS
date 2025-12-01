@@ -1,14 +1,14 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
+
     // ===========================================
     // USER DOCUMENTS - Read/Write own data only
     // ===========================================
     match /users/{userId} {
       // Users can read their own document
       allow read: if request.auth != null && request.auth.uid == userId;
-      
+
       // Users can create their own document with validated credit fields
       allow create: if request.auth != null 
                     && request.auth.uid == userId
@@ -16,13 +16,13 @@ service cloud.firestore {
                     && request.resource.data.subscriptionCredits >= 0
                     && request.resource.data.consumableCredits is int
                     && request.resource.data.consumableCredits >= 0;
-      
+
       // Users can update their own document with validated credit fields
       allow update: if request.auth != null 
                     && request.auth.uid == userId
                     && (!("subscriptionCredits" in request.resource.data) || (request.resource.data.subscriptionCredits is int && request.resource.data.subscriptionCredits >= 0))
                     && (!("consumableCredits" in request.resource.data) || (request.resource.data.consumableCredits is int && request.resource.data.consumableCredits >= 0));
-      
+
       // No delete allowed from client
       allow delete: if false;
     }
@@ -34,7 +34,7 @@ service cloud.firestore {
       // Anyone can read and write categories (CMS has no auth)
       allow read, write: if true;
     }
-    
+
     // ===========================================
     // FILTERS - Public read/write for CMS
     // ===========================================
@@ -42,7 +42,7 @@ service cloud.firestore {
       // Anyone can read and write filters (CMS has no auth)
       allow read, write: if true;
     }
-    
+
     // ===========================================
     // SUBCATEGORIES - Public read/write for CMS
     // ===========================================
@@ -63,6 +63,14 @@ service cloud.firestore {
     // ===========================================
     match /promptCategories/{categoryId} {
       // Anyone can read and write prompt categories (CMS has no auth)
+      allow read, write: if true;
+    }
+    
+    // ===========================================
+    // MASTER PROMPT - Public read/write for CMS
+    // ===========================================
+    match /masterPrompt/{docId} {
+      // Anyone can read and write master prompt (CMS has no auth)
       allow read, write: if true;
     }
     

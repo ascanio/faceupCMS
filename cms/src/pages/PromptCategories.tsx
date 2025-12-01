@@ -1,10 +1,12 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   collection,
   addDoc,
   updateDoc,
   deleteDoc,
   doc,
+  getDoc,
+  setDoc,
   onSnapshot,
   query,
   orderBy,
@@ -235,6 +237,7 @@ interface SortableCategoryRowProps {
   onToggleExpand: (id: string) => void;
   onEditCategory: (category: PromptCategory) => void;
   onDeleteCategory: (id: string) => void;
+  onExportCategory: (category: PromptCategory) => void;
   onEditOption: (category: PromptCategory, option: PromptOption) => void;
   onDeleteOption: (category: PromptCategory, optionId: string) => void;
   onOptionDragEnd: (category: PromptCategory, event: DragEndEvent) => void;
@@ -247,6 +250,7 @@ function SortableCategoryRow({
   onToggleExpand,
   onEditCategory, 
   onDeleteCategory,
+  onExportCategory,
   onEditOption,
   onDeleteOption,
   onOptionDragEnd,
@@ -358,6 +362,24 @@ function SortableCategoryRow({
           </button>
           <button 
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 font-medium hover:text-white transition-all duration-200 shadow-sm hover:shadow-md" 
+            style={{ borderColor: '#9333ea', color: '#9333ea' }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#9333ea';
+              e.currentTarget.style.color = 'white';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+              e.currentTarget.style.color = '#9333ea';
+            }}
+            onClick={() => onExportCategory(category)}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            Export
+          </button>
+          <button 
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 font-medium hover:text-white transition-all duration-200 shadow-sm hover:shadow-md" 
             style={{ borderColor: '#EA4E45', color: '#EA4E45' }}
             onMouseEnter={(e) => {
               e.currentTarget.style.backgroundColor = '#EA4E45';
@@ -415,6 +437,16 @@ export default function PromptCategoriesPage() {
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const [showMasterPromptModal, setShowMasterPromptModal] = useState(false);
+  const [masterPrompt, setMasterPrompt] = useState('');
+  const [masterPromptVersion, setMasterPromptVersion] = useState('1.0');
+  const [savingMasterPrompt, setSavingMasterPrompt] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportedJson, setExportedJson] = useState('');
+  const [copied, setCopied] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importJson, setImportJson] = useState('');
+  const [importing, setImporting] = useState(false);
   
   const showToast = (message: string, type: 'success' | 'error' | 'warning' = 'success') => {
     const id = Date.now();
@@ -440,6 +472,27 @@ export default function PromptCategoriesPage() {
         options: d.data().options || []
       }));
       setCategories(rows);
+    });
+    
+    return () => unsub();
+  }, []);
+
+  // Load master prompt
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, 'masterPrompt', 'default_master_prompt'), (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setMasterPrompt(data.prompt || '');
+        setMasterPromptVersion(data.version || '1.0');
+      } else {
+        // Document doesn't exist yet, initialize with empty prompt
+        setMasterPrompt('');
+        setMasterPromptVersion('1.0');
+      }
+    }, () => {
+      // Document doesn't exist, that's okay
+      setMasterPrompt('');
+      setMasterPromptVersion('1.0');
     });
     
     return () => unsub();
@@ -706,6 +759,163 @@ export default function PromptCategoriesPage() {
     setIsCreatingOption(false);
   }
 
+  function handleExportCategory(category: PromptCategory) {
+    // Create Firebase-compatible JSON (excluding Firestore-specific fields)
+    const exportData = {
+      id: category.id || '',
+      name: category.name,
+      icon: category.icon,
+      order: category.order,
+      visible: category.visible,
+      multiSelect: category.multiSelect,
+      tags: category.tags || [],
+      options: (category.options || []).map(option => ({
+        id: option.id,
+        label: option.label,
+        value: option.value,
+        order: option.order,
+        visible: option.visible,
+        defaultSelected: option.defaultSelected,
+        tags: option.tags || [],
+      })),
+    };
+
+    const jsonString = JSON.stringify(exportData, null, 2);
+    setExportedJson(jsonString);
+    setShowExportModal(true);
+    setCopied(false);
+  }
+
+  async function handleCopyToClipboard() {
+    try {
+      await navigator.clipboard.writeText(exportedJson);
+      setCopied(true);
+      showToast('JSON copied to clipboard!');
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      showToast('Failed to copy to clipboard', 'error');
+      console.error('Failed to copy:', error);
+    }
+  }
+
+  async function handleImport() {
+    if (!importJson.trim()) {
+      showToast('Please paste JSON data', 'warning');
+      return;
+    }
+
+    setImporting(true);
+    try {
+      let dataToImport: any;
+      
+      // Try to parse JSON
+      try {
+        dataToImport = JSON.parse(importJson);
+      } catch (parseError) {
+        showToast('Invalid JSON format', 'error');
+        setImporting(false);
+        return;
+      }
+
+      // Handle both single object and array
+      const categoriesToImport = Array.isArray(dataToImport) ? dataToImport : [dataToImport];
+      
+      let imported = 0;
+      let updated = 0;
+      let errors = 0;
+
+      for (const categoryData of categoriesToImport) {
+        try {
+          // Validate required fields
+          if (!categoryData.name) {
+            errors++;
+            continue;
+          }
+
+          const payload = {
+            name: categoryData.name,
+            icon: categoryData.icon || '',
+            order: categoryData.order ?? 0,
+            visible: categoryData.visible !== undefined ? categoryData.visible : true,
+            multiSelect: categoryData.multiSelect !== undefined ? categoryData.multiSelect : false,
+            tags: categoryData.tags || [],
+            options: categoryData.options || [],
+            updatedAt: serverTimestamp(),
+          };
+
+          // Check if category exists by ID or name
+          const existingCategory = categories.find(
+            c => c.id === categoryData.id || c.name === categoryData.name
+          );
+
+          if (existingCategory) {
+            // Update existing category
+            await updateDoc(doc(db, 'promptCategories', existingCategory.id!), payload);
+            updated++;
+          } else {
+            // Create new category
+            await addDoc(collection(db, 'promptCategories'), payload);
+            imported++;
+          }
+        } catch (error) {
+          console.error('Error importing category:', categoryData.name, error);
+          errors++;
+        }
+      }
+
+      // Show results
+      if (errors === 0) {
+        showToast(
+          `Successfully imported ${imported} new and updated ${updated} categories`,
+          'success'
+        );
+      } else {
+        showToast(
+          `Imported ${imported} new, updated ${updated}, ${errors} errors`,
+          errors === categoriesToImport.length ? 'error' : 'warning'
+        );
+      }
+
+      setShowImportModal(false);
+      setImportJson('');
+    } catch (error) {
+      showToast('Error importing data', 'error');
+      console.error('Import error:', error);
+    } finally {
+      setImporting(false);
+    }
+  }
+
+  async function handleSaveMasterPrompt() {
+    setSavingMasterPrompt(true);
+    try {
+      const payload = {
+        id: 'default_master_prompt',
+        prompt: masterPrompt,
+        updatedAt: serverTimestamp(),
+        version: masterPromptVersion,
+      };
+
+      const docRef = doc(db, 'masterPrompt', 'default_master_prompt');
+      const docSnap = await getDoc(docRef);
+      
+      if (docSnap.exists()) {
+        await updateDoc(docRef, payload);
+        showToast('Master prompt updated successfully');
+      } else {
+        await setDoc(docRef, payload);
+        showToast('Master prompt saved successfully');
+      }
+      
+      setShowMasterPromptModal(false);
+    } catch (error) {
+      showToast('Error saving master prompt', 'error');
+      console.error(error);
+    } finally {
+      setSavingMasterPrompt(false);
+    }
+  }
+
   return (
     <div className="w-full">
       <ToastContainer toasts={toasts} />
@@ -724,10 +934,48 @@ export default function PromptCategoriesPage() {
                 <p className="text-xs text-gray-500">Manage prompt categories and options</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 px-3 py-2 rounded-lg border" style={{ backgroundColor: 'rgba(255, 152, 39, 0.1)', borderColor: 'rgba(255, 152, 39, 0.3)' }}>
-              <span className="text-sm font-semibold" style={{ color: '#cc7820' }}>
-                {categories.length} categories
-              </span>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowMasterPromptModal(true)}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border-2 font-semibold text-sm transition-all shadow-sm hover:shadow-md"
+                style={{ borderColor: '#9333ea', color: '#9333ea' }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#9333ea';
+                  e.currentTarget.style.color = 'white';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = '#9333ea';
+                }}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Master Prompt
+              </button>
+              <button
+                onClick={() => setShowImportModal(true)}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border-2 font-semibold text-sm transition-all shadow-sm hover:shadow-md"
+                style={{ borderColor: '#10b981', color: '#10b981' }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#10b981';
+                  e.currentTarget.style.color = 'white';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = '#10b981';
+                }}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+                Import
+              </button>
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg border" style={{ backgroundColor: 'rgba(255, 152, 39, 0.1)', borderColor: 'rgba(255, 152, 39, 0.3)' }}>
+                <span className="text-sm font-semibold" style={{ color: '#cc7820' }}>
+                  {categories.length} categories
+                </span>
+              </div>
             </div>
           </div>
           
@@ -755,6 +1003,7 @@ export default function PromptCategoriesPage() {
                         onToggleExpand={toggleExpand}
                         onEditCategory={startEditCategory}
                         onDeleteCategory={removeCategory}
+                        onExportCategory={handleExportCategory}
                         onEditOption={startEditOption}
                         onDeleteOption={removeOption}
                         onOptionDragEnd={handleOptionDragEnd}
@@ -1044,6 +1293,264 @@ export default function PromptCategoriesPage() {
           )}
         </section>
       </div>
+
+      {/* Master Prompt Modal */}
+      {showMasterPromptModal && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" 
+          onClick={() => setShowMasterPromptModal(false)}
+        >
+          <div 
+            className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto" 
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="font-bold text-lg text-gray-900">Master Prompt</h3>
+                  <p className="text-xs text-gray-500">System prompt used by the app</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowMasterPromptModal(false)}
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  System Prompt
+                </label>
+                <textarea
+                  className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all resize-none font-mono text-sm"
+                  value={masterPrompt}
+                  onChange={(e) => setMasterPrompt(e.target.value)}
+                  rows={15}
+                  placeholder="Enter the master system prompt that will be used by the app..."
+                />
+                <p className="text-xs text-gray-500 mt-2">
+                  This prompt will be used as the base system prompt when generating prompts from categories and options.
+                </p>
+              </div>
+
+              <div className="flex gap-3 pt-4 border-t border-gray-200">
+                <button 
+                  disabled={savingMasterPrompt} 
+                  onClick={handleSaveMasterPrompt}
+                  className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg text-white font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
+                  style={{ 
+                    background: savingMasterPrompt ? '#9333ea' : 'linear-gradient(135deg, #9333ea 0%, #7c3aed 100%)',
+                    boxShadow: '0 10px 25px -5px rgba(147, 51, 234, 0.3)'
+                  }}
+                >
+                  {savingMasterPrompt ? (
+                    <>
+                      <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      Save Master Prompt
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowMasterPromptModal(false)}
+                  className="px-5 py-3 rounded-lg border-2 border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition-all"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Export Modal */}
+      {showExportModal && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" 
+          onClick={() => setShowExportModal(false)}
+        >
+          <div 
+            className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto" 
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="font-bold text-lg text-gray-900">Export Category</h3>
+                  <p className="text-xs text-gray-500">Firebase-compatible JSON</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowExportModal(false)}
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="relative">
+                <pre className="bg-gray-50 border-2 border-gray-200 rounded-lg p-4 overflow-auto text-sm font-mono" style={{ height: '600px' }}>
+                  <code>{exportedJson}</code>
+                </pre>
+              </div>
+
+              <div className="flex gap-3 pt-4 border-t border-gray-200">
+                <button 
+                  onClick={handleCopyToClipboard}
+                  className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg text-white font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all shadow-lg hover:shadow-xl"
+                  style={{ 
+                    background: copied ? '#10b981' : 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                    boxShadow: '0 10px 25px -5px rgba(59, 130, 246, 0.3)'
+                  }}
+                >
+                  {copied ? (
+                    <>
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      Copied!
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                      Copy JSON
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowExportModal(false)}
+                  className="px-5 py-3 rounded-lg border-2 border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition-all"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Import Modal */}
+      {showImportModal && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" 
+          onClick={() => !importing && setShowImportModal(false)}
+        >
+          <div 
+            className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto" 
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="font-bold text-lg text-gray-900">Import Categories</h3>
+                  <p className="text-xs text-gray-500">Paste JSON to import or update categories</p>
+                </div>
+              </div>
+              <button
+                onClick={() => !importing && setShowImportModal(false)}
+                disabled={importing}
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  JSON Data (single category or array of categories)
+                </label>
+                <textarea
+                  className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all resize-none font-mono text-sm"
+                  value={importJson}
+                  onChange={(e) => setImportJson(e.target.value)}
+                  rows={20}
+                  placeholder='Paste JSON here...\n\nExample single category:\n{\n  "id": "subject",\n  "name": "Subject Rules",\n  "icon": "person.crop.circle",\n  "order": 1,\n  "visible": true,\n  "multiSelect": true,\n  "tags": ["photo", "video"],\n  "options": [...]\n}\n\nOr array of categories:\n[{...}, {...}]'
+                  disabled={importing}
+                />
+                <p className="text-xs text-gray-500 mt-2">
+                  Supports both single category objects and arrays. Categories with matching IDs or names will be updated, others will be created.
+                </p>
+              </div>
+
+              <div className="flex gap-3 pt-4 border-t border-gray-200">
+                <button 
+                  disabled={importing || !importJson.trim()} 
+                  onClick={handleImport}
+                  className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg text-white font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
+                  style={{ 
+                    background: importing ? '#10b981' : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    boxShadow: '0 10px 25px -5px rgba(16, 185, 129, 0.3)'
+                  }}
+                >
+                  {importing ? (
+                    <>
+                      <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Importing...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                      </svg>
+                      Import Categories
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowImportModal(false)}
+                  disabled={importing}
+                  className="px-5 py-3 rounded-lg border-2 border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
