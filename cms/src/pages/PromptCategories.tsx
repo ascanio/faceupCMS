@@ -15,7 +15,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import type { PromptCategory, PromptOption } from '../types';
-import SFSymbol from '../components/SFSymbol';
+import * as LucideIcons from 'lucide-react';
 import {
   DndContext,
   closestCenter,
@@ -77,6 +77,7 @@ function ToastContainer({ toasts }: { toasts: Toast[] }) {
 interface CategoryFormState {
   name: string;
   icon: string;
+  iconWeb: string;
   order: number;
   visible: boolean;
   multiSelect: boolean;
@@ -98,6 +99,7 @@ function emptyCategoryForm(): CategoryFormState {
   return {
     name: '',
     icon: '',
+    iconWeb: '',
     order: 0,
     visible: true,
     multiSelect: false,
@@ -116,6 +118,47 @@ function emptyOptionForm(): OptionFormState {
     tags: [],
     categoryId: '',
   };
+}
+
+// Component to dynamically render Lucid icons
+function LucidIcon({ name, className = '', size = 20 }: { name: string; className?: string; size?: number }) {
+  if (!name) return null;
+  
+  // Convert icon name to PascalCase (e.g., "user" -> "User", "user-circle" -> "UserCircle")
+  const iconName = name
+    .split(/[-_]/)
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join('');
+  
+  // Get the icon component from lucide-react
+  const IconComponent = (LucideIcons as any)[iconName] as React.ComponentType<{ className?: string; size?: number }>;
+  
+  if (!IconComponent) {
+    // Fallback: show a generic icon if the icon name doesn't exist
+    return (
+      <span 
+        className={`inline-flex items-center justify-center ${className}`}
+        style={{ width: `${size}px`, height: `${size}px` }}
+        title={name}
+      >
+        <svg 
+          style={{ width: `${size}px`, height: `${size}px` }}
+          fill="none" 
+          stroke="currentColor" 
+          viewBox="0 0 24 24"
+        >
+          <path 
+            strokeLinecap="round" 
+            strokeLinejoin="round" 
+            strokeWidth={2} 
+            d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" 
+          />
+        </svg>
+      </span>
+    );
+  }
+  
+  return <IconComponent className={className} size={size} />;
 }
 
 interface SortableOptionRowProps {
@@ -303,7 +346,7 @@ function SortableCategoryRow({
             >
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
-            {category.icon && <SFSymbol name={category.icon} className="text-gray-700" size={20} />}
+            {category.iconWeb && <LucidIcon name={category.iconWeb} className="text-gray-700" size={20} />}
             <span className="font-semibold" style={{ color: '#141619' }}>{category.name}</span>
           </button>
         </td>
@@ -552,6 +595,7 @@ export default function PromptCategoriesPage() {
       const payload = {
         name: categoryForm.name,
         icon: categoryForm.icon,
+        iconWeb: categoryForm.iconWeb,
         order: categoryForm.order,
         visible: categoryForm.visible,
         multiSelect: categoryForm.multiSelect,
@@ -636,6 +680,7 @@ export default function PromptCategoriesPage() {
     setCategoryForm({
       name: category.name,
       icon: category.icon,
+      iconWeb: category.iconWeb || '',
       order: category.order,
       visible: category.visible,
       multiSelect: category.multiSelect,
@@ -765,6 +810,7 @@ export default function PromptCategoriesPage() {
       id: category.id || '',
       name: category.name,
       icon: category.icon,
+      iconWeb: category.iconWeb || '',
       order: category.order,
       visible: category.visible,
       multiSelect: category.multiSelect,
@@ -835,6 +881,7 @@ export default function PromptCategoriesPage() {
           const payload = {
             name: categoryData.name,
             icon: categoryData.icon || '',
+            iconWeb: categoryData.iconWeb || '',
             order: categoryData.order ?? 0,
             visible: categoryData.visible !== undefined ? categoryData.visible : true,
             multiSelect: categoryData.multiSelect !== undefined ? categoryData.multiSelect : false,
@@ -1222,6 +1269,17 @@ export default function PromptCategoriesPage() {
                   onChange={(e) => setCategoryForm((f) => ({ ...f, icon: e.target.value }))}
                   placeholder="person.crop.circle"
                 />
+                <p className="text-xs text-gray-500 mt-1">SF Symbol name for iOS app</p>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Icon Web (Lucid Icon)</label>
+                <input
+                  className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                  value={categoryForm.iconWeb}
+                  onChange={(e) => setCategoryForm((f) => ({ ...f, iconWeb: e.target.value }))}
+                  placeholder="User"
+                />
+                <p className="text-xs text-gray-500 mt-1">Lucid icon name for web app</p>
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Order</label>

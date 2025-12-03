@@ -80,7 +80,8 @@ export interface PromptOption {
 export interface PromptCategory {
 	id?: string; // Firestore document id
 	name: string;
-	icon: string;
+	icon: string; // SF Symbol name for iOS
+	iconWeb?: string; // Lucid icon name for web
 	order: number;
 	visible: boolean;
 	multiSelect: boolean;
